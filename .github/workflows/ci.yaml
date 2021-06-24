@@ -1,0 +1,25 @@
+name: CI check
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@master
+        with:
+          node-version: 14
+      - run: cp .env.sample .env
+      - run: yarn install --frozen-lockfile
+      - run: yarn run build:docker
+      - run: yarn run build
+      - run: yarn run lint
+      - run: yarn run test:unit:ci
+      - run: yarn run task e2e
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
