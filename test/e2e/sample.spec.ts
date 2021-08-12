@@ -4,7 +4,7 @@ import { logger } from "../../src/services/logger";
 
 import { app } from "./app-setup";
 
-describe("Sample e2e test", function () {
+describe("Blocks e2e test", function () {
   beforeEach(async function () {
     logger.level = "silent";
   });
@@ -16,11 +16,11 @@ describe("Sample e2e test", function () {
   it("Should successfully query database", async function () {
     const res = await app().instance.inject({
       method: "GET",
-      path: "/samples",
+      path: "/blocks",
     });
-
+    
     expect(res.json()).not.to.be.undefined;
     expect(res.json()).not.to.be.equal(null);
-    expect(res.json()).to.be.deep.equal([]);
+    expect(res.json().items).to.be.deep.equal([]);
   });
 });
