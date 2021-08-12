@@ -4,11 +4,11 @@ import {
   InsertEvent,
 } from "typeorm";
 
-import { Sample } from "../entities";
+import { Block } from "../entities";
 
 @EventSubscriber()
-export class SampleSubscriber implements EntitySubscriberInterface<Sample> {
-  beforeInsert(event: InsertEvent<Sample>): void {
+export class SampleSubscriber implements EntitySubscriberInterface<Block> {
+  beforeInsert(event: InsertEvent<Block>): void {
     // eslint-disable-next-line no-console
     console.log(event);
   }
