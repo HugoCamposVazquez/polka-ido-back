@@ -73,6 +73,7 @@ export class App {
   }
 
   public async stop(signal: string | undefined): Promise<void> {
+    await this.minter.stop()
     await this.instance.db
       .close()
       .catch((error) =>
