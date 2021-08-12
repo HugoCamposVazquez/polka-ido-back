@@ -15,7 +15,7 @@ export class Block {
 
   @Column({
     type: "varchar",
-    unique: true
+    unique: true,
   })
   public blockNumber!: number;
 
