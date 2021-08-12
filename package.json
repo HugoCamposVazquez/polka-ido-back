@@ -19,7 +19,7 @@
     "db:migrate": "npx task npm typeorm-ts migration:run",
     "db:seed": "npx task npm seeder seed",
     "db:revert": "npx task npm typeorm-ts migration:revert",
-    "lint": "yarn run lint:style --fix && yarn run lint:types",
+    "lint": "yarn run lint:style && yarn run lint:types",
     "lint:style": "eslint --color --ext .ts src/ test/",
     "lint:types": "tsc --noEmit --pretty",
     "test": "yarn run test:unit",

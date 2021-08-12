@@ -13,7 +13,10 @@ export class Block {
   @Column("varchar")
   public blockTime!: number;
 
-  @Column("varchar")
+  @Column({
+    type: "varchar",
+    unique: true
+  })
   public blockNumber!: number;
 
   @CreateDateColumn()
