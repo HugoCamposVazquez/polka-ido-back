@@ -11,13 +11,15 @@ import fastifySwagger from "fastify-swagger";
 import { Connection } from "typeorm";
 
 import { config as envPluginConfig } from "./config";
+import { BlockRepository } from "./repositories/BlockRepository";
 import { getDatabaseConnection } from "./services/db";
 import { logger } from "./services/logger";
+import { Minter } from "./services/minter";
 import { routesPlugin } from "./services/plugins/routes";
 import { SWAGGER_CONFIG } from "./services/swagger";
 export class App {
   public readonly instance: FastifyInstance;
-
+  private minter!: Minter;
   protected constructor(instance: FastifyInstance) {
     this.instance = instance;
   }
@@ -40,6 +42,14 @@ export class App {
     try {
       await this.initDb();
       await this.instance.ready();
+
+      this.minter = new Minter(
+        this.instance.config,
+        this.instance.db.getCustomRepository(BlockRepository)
+      );
+
+      this.minter.start();
+
       logger.info(this.instance.printRoutes());
       return new Promise((resolve, reject) => {
         this.instance.listen(

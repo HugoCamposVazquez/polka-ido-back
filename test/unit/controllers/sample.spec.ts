@@ -5,56 +5,60 @@ import sinon, { SinonStubbedInstance } from "sinon";
 import { factory } from "typeorm-seeding";
 
 import { App } from "../../../src/App";
-import { Sample } from "../../../src/entities";
-import { SampleRepository } from "../../../src/repositories/sample";
+import { Block } from "../../../src/entities";
+import { BlockRepository } from "../../../src/repositories/BlockRepository";
 import { logger } from "../../../src/services/logger";
 import "../../../src/services/db/factories/sample.factory";
 
 describe("sample controller", function () {
   let app: App;
-  let sampleRepositoryStub: SinonStubbedInstance<SampleRepository>;
+  let blockRepositoryStub: SinonStubbedInstance<BlockRepository>;
 
   beforeEach(async function () {
     logger.level = "silent";
+    process.env.STATEMINT_MINTING_WALLET_MNEMONIC="//alice"
+    process.env.SWAP_FACTORY_ADDRESS="0xe0daCCBFbf3EdBbbc8E768fa520c8C80Dd758D13"
+    process.env.FACTORY_DEPLOYMENT_BLOCK="408638"
+
     app = await App.init();
-    sampleRepositoryStub = sinon.createStubInstance(SampleRepository);
+    blockRepositoryStub = sinon.createStubInstance(BlockRepository);
     app.instance.decorate("db", {
-      getCustomRepository: () => sampleRepositoryStub,
+      getCustomRepository: () => blockRepositoryStub,
     });
+    await app.instance.ready();
+
   });
 
   afterEach(async function () {
     logger.level = "silent";
+    sinon.restore();
   });
 
-  it("get samples", async function () {
-    sampleRepositoryStub.find.resolves([]);
+  it("Should get paginated blocks", async function () {
     try {
-      const res = await app.instance.inject({
-        method: "GET",
-        path: "/samples",
-      });
-      expect(res.json()).to.be.deep.equal([]);
-    } catch (e) {
-      assert.fail(e);
-    }
-  });
-
-  it("get filtered samples", async function () {
-    const sampleFactory = factory(Sample)();
-    const sample = await sampleFactory.make({ name: "Test" });
-    sampleRepositoryStub.findByName.resolves([sample]);
-    try {
-      const res = await app.instance.inject({
-        method: "GET",
-        path: "/samples",
-        query: {
-          name: "Test",
+      const data = {
+        items: [],
+        meta: {
+            totalItems: 0,
+            itemCount: 0,
+            itemsPerPage: 10,
+            totalPages: 0,
+            currentPage: 1
         },
+        links: {
+            first: "/blocks?limit=10",
+            previous: "",
+            next: "",
+            last: ""
+        }
+      }
+      blockRepositoryStub.getAll.resolves(data);
+
+      const res = await app.instance.inject({
+        method: "GET",
+        path: "/blocks",
       });
-      expect(res.json()).to.be.deep.equal([sample]);
-      expect(sampleRepositoryStub.findByName.withArgs("Test").calledOnce).to.be
-        .true;
+      expect(res.json()).to.be.deep.equal(data)
     } catch (e) {
       assert.fail(e);
     }
