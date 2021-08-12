@@ -5,7 +5,7 @@ import { Contract, ethers } from "ethers";
 
 import { BlockRepository } from "../../repositories/BlockRepository";
 import { logger } from "../logger";
-import { retry, isTimeOutError } from "../utils";
+import { retry, isTimeOutError, getProvider } from "../utils";
 /* eslint-disable @typescript-eslint/naming-convention */
 interface Iconfig {
   REDIS_URL: string;
@@ -23,7 +23,7 @@ interface Iconfig {
 export class Minter {
   private blockRepository: BlockRepository;
   private config: Iconfig;
-  private provider!: ethers.providers.JsonRpcProvider;
+  private provider!: ethers.providers.BaseProvider;
   private saleContractAddresses: string[];
   private tokenSaleIface: ethers.utils.Interface;
   constructor(config: Iconfig, blockRepository: BlockRepository) {
@@ -32,7 +32,8 @@ export class Minter {
     this.saleContractAddresses = [];
     this.tokenSaleIface = new ethers.utils.Interface(TokenSaleContract.abi);
     try {
-      this.provider = new ethers.providers.JsonRpcProvider(
+      this.provider = getProvider(
+        this.config.NETWORK,
         this.config.NETWORK_URL,
         this.config.CHAIN_ID
       );

@@ -1,3 +1,5 @@
+import { ethers, providers } from "ethers";
+
 export interface IRetryOptions {
   /**
    * The maximum amount of times to retry the operation. Default is 5
@@ -45,8 +47,17 @@ export async function retry<A>(
 }
 
 export function isTimeOutError(error: Error): boolean {
-  return (
-    error instanceof Error &&
-    error.message.includes("timeout")
-  );
+  return error instanceof Error && error.message.includes("timeout");
+}
+
+export function getProvider(
+  network: string,
+  localURL: string,
+  chainID: number
+): ethers.providers.BaseProvider {
+  if (network === "localhost" || network === "moonbaseAlpha") {
+    return new ethers.providers.JsonRpcProvider(localURL, chainID);
+  }
+
+  return new providers.InfuraProvider(network, chainID);
 }
