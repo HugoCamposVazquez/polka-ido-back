@@ -1,22 +1,17 @@
-import {
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-} from "typeorm";
+import { Column, Entity, PrimaryColumn, CreateDateColumn } from "typeorm";
 
 @Entity({ name: "block" })
 export class Block {
-  @PrimaryGeneratedColumn()
-  public id!: number;
+  @PrimaryColumn()
+  public blockHash!: string;
 
   @Column("varchar")
-  public blockTime!: number;
+  public chainId!: number;
 
-  @Column({
-    type: "varchar",
-    unique: true,
-  })
+  @Column("varchar")
+  public blockTime!: Date;
+
+  @Column("varchar")
   public blockNumber!: number;
 
   @CreateDateColumn()
