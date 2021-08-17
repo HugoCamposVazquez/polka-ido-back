@@ -113,7 +113,7 @@ export class Indexer {
       // @ts-ignore
       deployments[this.config.CHAIN_ID][this.config.NETWORK].contracts[
         this.config.FACTORY_CONTRACT_NAME
-      ].address, // "0xa85Db5325b493e04e71961f557409718E65bA85B",
+      ].address,
       this.factoryIface,
       this.provider
     );
