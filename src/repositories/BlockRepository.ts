@@ -3,6 +3,13 @@ import { EntityRepository, Repository } from "typeorm";
 
 import { Block } from "../entities";
 
+type BlockIndex = {
+  blockHash: string;
+  chainId: number;
+  blockTime: Date;
+  blockNumber: number;
+};
+
 @EntityRepository(Block)
 export class BlockRepository extends Repository<Block> {
   public async getAll(
@@ -17,24 +24,15 @@ export class BlockRepository extends Repository<Block> {
     });
   }
 
-  public async createBlocks(
-    blocks: {
-      blockTime: number;
-      blockNumber: number;
-    }[]
-  ): Promise<void> {
-    await this.manager
-      .createQueryBuilder()
-      .insert()
-      .into(Block)
-      .values(blocks)
-      .execute();
+  public async insertBlock(block: BlockIndex): Promise<Block> {
+    const blockInstance = await this.create(block);
+    return await this.save(blockInstance);
   }
 
   public async getLatestBlock(): Promise<{ blockNumber: number } | undefined> {
     return await this.manager
       .createQueryBuilder<Block>(Block, "block")
       .select("MAX(block.blockNumber)", "blockNumber")
-      .getRawOne();
+      .execute();
   }
 }
