@@ -46,9 +46,13 @@ export const config: fastifyEnvOpt = {
         type: "number",
         default: 1287,
       },
-      CONTRACT_NAME: {
+      FACTORY_CONTRACT_NAME: {
         type: "string",
         default: "SaleContractFactory",
+      },
+      TOKEN_SALE_CONTRACT_NAME: {
+        type: "string",
+        default: "SaleContract",
       },
       SWAP_FACTORY_ADDRESS: {
         type: "string",
@@ -67,6 +71,10 @@ export const config: fastifyEnvOpt = {
       STATEMINT_MINTING_WALLET_MNEMONIC: {
         type: "string",
       },
+      PROCESSING_BLOCK_COUNT: {
+        type: "number",
+        default: 100,
+      },
     },
   },
   env: true,
@@ -83,13 +91,15 @@ declare module "fastify" {
       NETWORK_URL: string;
       NETWORK: string;
       CHAIN_ID: number;
-      CONTRACT_NAME: string;
+      FACTORY_CONTRACT_NAME: string;
+      TOKEN_SALE_CONTRACT_NAME: string;
       REDIS_URL: string;
       SWAP_FACTORY_ADDRESS: string;
       FACTORY_DEPLOYMENT_BLOCK: number;
       MINT_ATTEMPTS: number;
       STATEMINT_NETWORK_URL: string;
       STATEMINT_MINTING_WALLET_MNEMONIC: string;
+      PROCESSING_BLOCK_COUNT: number;
     };
   }
 }
