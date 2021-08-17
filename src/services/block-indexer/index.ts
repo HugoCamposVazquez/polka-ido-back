@@ -62,11 +62,10 @@ export class Indexer {
     this.saleContractAddresses = saleContracts.map(
       (contract) => contract.address
     );
-    this.provider.on("block", this.blockEventListener);
-    const headBlock = await this.provider.getBlockNumber();
 
     // process all unhandled blocks
-    await this.processPastClaimEvents(headBlock);
+    await this.processPastClaimEvents();
+    this.provider.on("block", this.blockEventListener);
   }
 
   public stop(): void {
@@ -74,9 +73,11 @@ export class Indexer {
     this.provider.off("block", this.blockEventListener);
   }
 
-  private async processPastClaimEvents(headBlock: number): Promise<void> {
+  private async processPastClaimEvents(): Promise<void> {
     // fetch latest block from database which claim events are processed(minted)
     const latestBlock = await this.blockRepository.getLatestBlock();
+    const headBlock = await this.provider.getBlockNumber();
+
     let fromBlock =
       latestBlock?.blockNumber || this.config.FACTORY_DEPLOYMENT_BLOCK;
     fromBlock++;
@@ -89,6 +90,7 @@ export class Indexer {
     while (fetchNewBlocks) {
       await retry(
         async () => {
+          const headBlock = await this.provider.getBlockNumber();
           await this.handleBlock(fromBlock, toBlock);
           if (toBlock === headBlock) {
             fetchNewBlocks = false;
@@ -113,7 +115,7 @@ export class Indexer {
       // @ts-ignore
       deployments[this.config.CHAIN_ID][this.config.NETWORK].contracts[
         this.config.FACTORY_CONTRACT_NAME
-      ].address,
+      ].address, // "0xa85Db5325b493e04e71961f557409718E65bA85B",
       this.factoryIface,
       this.provider
     );
