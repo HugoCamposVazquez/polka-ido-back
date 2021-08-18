@@ -1,12 +1,13 @@
 import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContract.sol/SaleContract.json";
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
 import deployments from "@nodefactoryio/ryu-contracts/deployments/deployments.json";
-import Bull, { Queue } from "bull";
+import { Queue } from "bullmq";
 import { Contract, ethers } from "ethers";
 
 import { BlockRepository } from "../../repositories/BlockRepository";
 import { SaleContractRepository } from "../../repositories/SaleContractRepository";
 import { logger } from "../logger";
+import { QueueType } from "../queue";
 import { retry, isTimeOutError } from "../utils";
 /* eslint-disable @typescript-eslint/naming-convention */
 interface Iconfig {
@@ -51,8 +52,10 @@ export class Indexer {
       throw err;
     }
 
-    this.mintQueue = new Bull("mint", {
-      redis: this.config.REDIS_URL,
+    this.mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
+      connection: {
+        path: this.config.REDIS_URL,
+      },
     });
   }
 
@@ -120,8 +123,7 @@ export class Indexer {
       this.provider
     );
 
-    const createdSaleContractFilter =
-      factoryContract.filters.CreatedSaleContract();
+    const createdSaleContractFilter = factoryContract.filters.CreatedSaleContract();
 
     const claimFilter = {
       topics: [ethers.utils.id("Claim(string,uint,struct)")],
@@ -168,7 +170,7 @@ export class Indexer {
           txHash: claimLog.transactionHash,
           blockNumber: claimLog.blockNumber,
         };
-        this.mintQueue.add(data);
+        this.mintQueue.add(QueueType.CLAIM_EXECUTOR, data);
         this.blockRepository.insertBlock({
           blockHash: block.hash,
           chainId: this.config.CHAIN_ID,
