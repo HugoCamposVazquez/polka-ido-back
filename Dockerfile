@@ -8,6 +8,7 @@ WORKDIR /usr/app
 COPY yarn.lock .
 COPY package.json .
 COPY .env.sample .
+COPY .npmrc .
 
 RUN yarn install --ignore-scripts --non-interactive --frozen-lockfile && yarn cache clean
 

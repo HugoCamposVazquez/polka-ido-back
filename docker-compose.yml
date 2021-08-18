@@ -26,6 +26,23 @@ services:
     - POSTGRES_DB=${TYPEORM_DATABASE:-nodefactory}
     ports:
     - ${DB_LOCAL_PORT:-9999}:5432
+
+  redis:
+    image: redis:alpine
+    container_name: redis_db
+    command: redis-server
+    ports:
+      - 6379:6379
+    volumes:
+      - ./data:/data
+    restart: always
+    networks:
+      - redis_net
+
 volumes:
   node_modules:
   postgres:
+
+networks:
+  redis_net:
+    driver: bridge
