@@ -28,7 +28,9 @@ export class SaleContractRepository extends Repository<SaleContract> {
     return await this.save(saleContractInstance);
   }
 
-  public async getAllAddresses(): Promise<SaleContract[]> {
-    return await this.find({ select: ["address"] });
+  public async getAllAddresses(): Promise<string[]> {
+    const contracts = await this.find({ select: ["address"] });
+    const addresses = contracts.map((contract) => contract.address);
+    return addresses;
   }
 }
