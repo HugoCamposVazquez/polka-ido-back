@@ -22,7 +22,7 @@ export class StatemintWallet {
     receiver: string,
     amount: BN
   ): Promise<SubmittableResultResult<"promise">> {
-    return await this.api.tx.assets
+    return this.api.tx.assets
       .transferApproved(tokenId, owner, receiver, amount)
       .signAndSend(this.wallet);
   }

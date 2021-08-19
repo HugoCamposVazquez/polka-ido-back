@@ -14,4 +14,18 @@ export class ClaimRepository extends Repository<Claim> {
     const createdClaim = this.create(claim);
     return this.save(createdClaim);
   }
+
+  public async updateClaimStatus(
+    claimId: string,
+    status: ClaimStatus
+  ): Promise<void> {
+    await this.update(
+      {
+        claimTxHash: claimId,
+      },
+      {
+        status: status,
+      }
+    );
+  }
 }
