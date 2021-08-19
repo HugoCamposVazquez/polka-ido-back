@@ -27,6 +27,9 @@ describe("Execute claim function", function () {
       walletStub as unknown as StatemintWallet,
       claimRepositoryStub as unknown as ClaimRepository
     );
+    claimRepositoryStub.createClaim.resolves({
+      claimTxHash: "hash",
+    } as Claim);
     walletStub.transferFrom.resolves();
   });
 
