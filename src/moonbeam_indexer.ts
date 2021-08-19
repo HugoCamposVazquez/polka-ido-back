@@ -1,8 +1,7 @@
-import fastify from "fastify";
-import fastifyEnv from "fastify-env";
+import envSchema from "env-schema";
 import { Connection } from "typeorm";
 
-import { config as envPluginConfig } from "./config";
+import { blockIndexerConfig, Env } from "./config";
 import { BlockRepository } from "./repositories/BlockRepository";
 import { SaleContractRepository } from "./repositories/SaleContractRepository";
 import { Indexer } from "./services/block-indexer";
@@ -14,15 +13,10 @@ main();
 async function main(): Promise<void> {
   let indexer;
   try {
+    const conf = envSchema<Env>(blockIndexerConfig);
     const db = await initDb();
-    const instance = fastify({
-      logger: logger,
-      return503OnClosing: true,
-    });
-    instance.register(fastifyEnv, envPluginConfig);
-    await instance.ready();
     indexer = new Indexer(
-      instance.config,
+      conf,
       db.getCustomRepository(BlockRepository),
       db.getCustomRepository(SaleContractRepository)
     );
@@ -34,6 +28,10 @@ async function main(): Promise<void> {
     );
     await indexer?.stop();
   }
+
+  process.on("unhandledRejection", (err) => {
+    logger.error({ err }, "Unhandled promise rejection");
+  });
 }
 
 async function initDb(): Promise<Connection> {
