@@ -1,17 +1,17 @@
 version: "3.4"
 services:
-  backend:
+  block-indexer:
     build:
       context: .
       target: dev
     command: sh -c "yarn run nodemon"
-    image: nodefactory/nodejs-ts-starter:${IMAGE_TAG:-latest}
+    image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
     container_name: "${BACKEND_CONTAINER_NAME:-nodejs-backend}"
     depends_on:
       - db
     volumes:
           - .:/usr/app
-          - node_modules:/usr/app/node_modules
+          - /usr/src/app/node_modules
     ports:
           - "${BACKEND_LOCAL_PORT:-3000}:${SERVER_PORT:-3000}"
           - "${DEBUG_PORT:-56745}:56745"
@@ -26,6 +26,11 @@ services:
     - POSTGRES_DB=${TYPEORM_DATABASE:-nodefactory}
     ports:
     - ${DB_LOCAL_PORT:-9999}:5432
+  redis:
+    image: "redis:alpine"
+    container_name: "${REDIS_CONTAINER_NAME:-nodejs-db}"
+    ports:
+      - ${REDIS_PORT:-9999}:6379
 volumes:
   node_modules:
   postgres:
