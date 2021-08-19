@@ -1,23 +1,20 @@
-import {
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
-} from "typeorm";
+import { Column, Entity, ManyToOne, JoinColumn, PrimaryColumn } from "typeorm";
 
 import { Block } from "./Block";
 
 @Entity({ name: "saleContract" })
 export class SaleContract {
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   public id!: number;
 
   @Column("varchar")
   public address!: string;
 
-  @Column()
+  @Column("varchar")
   public blockHash!: string;
+
+  @Column("varchar")
+  public walletAddress!: string;
 
   @ManyToOne(() => Block, (block) => block.blockHash)
   @JoinColumn({

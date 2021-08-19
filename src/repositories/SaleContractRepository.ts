@@ -6,6 +6,8 @@ import { SaleContract } from "../entities";
 type SaleContractData = {
   address: string;
   blockHash: string;
+  id: number;
+  walletAddress: string;
 };
 @EntityRepository(SaleContract)
 export class SaleContractRepository extends Repository<SaleContract> {

@@ -123,7 +123,8 @@ export class Indexer {
       this.provider
     );
 
-    const createdSaleContractFilter = factoryContract.filters.CreatedSaleContract();
+    const createdSaleContractFilter =
+      factoryContract.filters.CreatedSaleContract();
 
     const claimFilter = {
       topics: [ethers.utils.id("Claim(string,uint,struct)")],
@@ -145,6 +146,8 @@ export class Indexer {
       const saleContract = {
         address: saleContractEvent.args?.tokenSaleAddress,
         blockHash: block.hash,
+        id: saleContractEvent.args?.token.tokenID,
+        walletAddress: saleContractEvent.args?.token.walletAddress,
       };
 
       await this.blockRepository.insertBlock({
@@ -154,6 +157,7 @@ export class Indexer {
         blockNumber: block.number,
       });
       await this.saleContractRepository.insertSaleContract(saleContract);
+
       this.saleContractAddresses.push(saleContractEvent.args?.tokenSaleAddress);
     });
 
