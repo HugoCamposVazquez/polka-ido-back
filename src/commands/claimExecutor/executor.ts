@@ -57,17 +57,17 @@ export function executeClaim(
     }
 
     try {
-      const tx = await wallet.transferFrom(
+      await wallet.transferFrom(
         job.data.saleContractId,
         job.data.walletAddress,
         job.data.receiver,
-        new BN(job.data.amount)
+        new BN(job.data.amount),
+        claim.claimTxHash
       );
 
       logger.info(
         {
           id: job.id,
-          txHash: tx.hash,
           data: job.data,
         },
         `Successfully transfered claim`

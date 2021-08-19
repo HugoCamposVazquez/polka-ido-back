@@ -17,6 +17,26 @@ export async function sleep(ms: number): Promise<void> {
   });
 }
 
+export async function waitFor(
+  predicate: () => Promise<boolean> | boolean,
+  { interval = 500, timeout = 10000 } = {}
+): Promise<boolean> {
+  const asyncPredicate = (): unknown => Promise.resolve(predicate());
+
+  let elapsed = 0;
+
+  while (!(await asyncPredicate())) {
+    if (elapsed > timeout) {
+      throw Error("Timeout");
+    }
+
+    await sleep(interval);
+    elapsed += interval;
+  }
+
+  return true;
+}
+
 /**
  * Retry a given function on error.
  * @param fn Async callback to retry. Invoked with 1 parameter
