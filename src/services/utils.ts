@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 export interface IRetryOptions {
   /**
    * The maximum amount of times to retry the operation. Default is 5
@@ -36,14 +38,11 @@ export async function retry<A>(
       return await fn(i);
     } catch (e) {
       lastError = e as Error;
+      logger.warn(e);
       if (shouldRetry && !shouldRetry(lastError)) {
         break;
       }
     }
   }
   throw lastError;
-}
-
-export function isTimeOutError(error: Error): boolean {
-  return error instanceof Error && error.message.includes("timeout");
 }
