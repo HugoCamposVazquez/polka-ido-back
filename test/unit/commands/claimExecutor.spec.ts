@@ -27,11 +27,7 @@ describe("Execute claim function", function () {
       walletStub as unknown as StatemintWallet,
       claimRepositoryStub as unknown as ClaimRepository
     );
-    walletStub.transferFrom.resolves({
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      hash: "hash",
-    });
+    walletStub.transferFrom.resolves();
   });
 
   afterEach(function () {
