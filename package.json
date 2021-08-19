@@ -42,8 +42,8 @@
     "@nodefactoryio/ryu-contracts": "0.3.0",
     "@polkadot/api": "^4.17.1",
     "@substrate/txwrapper-polkadot": "^1.2.5",
-    "@types/bull": "^3.15.3",
     "bull": "^3.22.9",
+    "env-schema": "^3.3.0",
     "ethers": "^5.3.1",
     "fastify": "^3.17.0",
     "fastify-compress": "^3.5.0",
@@ -66,6 +66,7 @@
     "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
+    "@types/bull": "^3.15.3",
     "@types/chai": "^4.2.14",
     "@types/faker": "^5.1.5",
     "@types/mocha": "^8.2.0",
