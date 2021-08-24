@@ -40,6 +40,10 @@ export const blockIndexerConfig = {
       FACTORY_DEPLOYMENT_BLOCK: {
         type: "number",
       },
+      REORG_PROTECTION_COUNT: {
+        type: "number",
+        default: 6,
+      },
     },
   },
   env: true,
@@ -54,4 +58,5 @@ export interface Env {
   REDIS_HOST: string;
   REDIS_PORT: number;
   FACTORY_DEPLOYMENT_BLOCK: number;
+  REORG_PROTECTION_COUNT: number;
 }
