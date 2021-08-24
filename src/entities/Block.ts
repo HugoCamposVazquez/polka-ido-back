@@ -11,6 +11,9 @@ export class Block {
   @Column("integer")
   public blockNumber!: number;
 
+  @Column({ type: "varchar", nullable: true })
+  public error!: string;
+
   @CreateDateColumn()
   public createdAt!: Date;
 }
