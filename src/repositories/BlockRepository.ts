@@ -7,6 +7,7 @@ type BlockIndex = {
   blockHash: string;
   chainId: number;
   blockNumber: number;
+  error?: string;
 };
 
 @EntityRepository(Block)

@@ -5,6 +5,7 @@ import { SaleContract } from "../entities";
 
 type SaleContractData = {
   address: string;
+  chainId: number;
   blockHash: string;
 };
 @EntityRepository(SaleContract)
@@ -30,7 +31,9 @@ export class SaleContractRepository extends Repository<SaleContract> {
 
   public async getAllAddresses(): Promise<string[]> {
     const contracts = await this.find({ select: ["address"] });
-    const addresses = contracts.map((contract) => contract.address);
+    const addresses = contracts.map((contract) =>
+      contract.address.toLowerCase()
+    );
     return addresses;
   }
 }
