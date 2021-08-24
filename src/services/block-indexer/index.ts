@@ -1,3 +1,4 @@
+import { Log } from "@ethersproject/abstract-provider";
 import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContract.sol/SaleContract.json";
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
 import deployments from "@nodefactoryio/ryu-contracts/deployments/deployments.json";
@@ -18,6 +19,7 @@ interface Iconfig {
   CHAIN_ID: number;
   FACTORY_CONTRACT_NAME: string;
   TOKEN_SALE_CONTRACT_NAME: string;
+  REORG_PROTECTION_COUNT: number;
 }
 
 export class Indexer {
@@ -29,6 +31,7 @@ export class Indexer {
   private mintQueue: Queue;
   private tokenSaleIface: ethers.utils.Interface;
   private factoryIface: ethers.utils.Interface;
+  private fetchNewBlocks = true;
   constructor(
     config: Iconfig,
     blockRepository: BlockRepository,
@@ -78,45 +81,49 @@ export class Indexer {
     let fromToBlock =
       latestBlock?.blockNumber || this.config.FACTORY_DEPLOYMENT_BLOCK;
 
-    let fetchNewBlocks = true;
-    while (fetchNewBlocks) {
-      await retry(
-        async () => {
-          const headBlock = await this.provider.getBlockNumber();
-          await this.handleBlock(fromToBlock, fromToBlock);
-          if (fromToBlock === headBlock) {
-            fetchNewBlocks = false;
-          }
-          fromToBlock++;
-        },
-        {
-          retries: 3,
+    try {
+      while (this.fetchNewBlocks) {
+        // break when all past blocks processed
+        if ((await retry(this.getHeadBlock)) < fromToBlock) {
+          break;
         }
-      );
+
+        const logs = await retry(async () => {
+          return await this.provider.getLogs({
+            fromBlock: fromToBlock,
+            toBlock: fromToBlock,
+          });
+        });
+        // save block into database
+        if (logs.length) {
+          await this.blockRepository.insertBlock({
+            blockHash: logs[0].blockHash,
+            chainId: this.config.CHAIN_ID,
+            blockNumber: logs[0].blockNumber,
+          });
+        }
+        await this.handleLogs(logs);
+        fromToBlock++;
+      }
+    } catch (err) {
+      // hack: insert for blockHash block number
+      await this.blockRepository.insertBlock({
+        blockHash: fromToBlock.toString(),
+        chainId: this.config.CHAIN_ID,
+        blockNumber: fromToBlock,
+        error: err.stack,
+      });
+      fromToBlock++;
     }
   }
 
-  private async handleBlock(fromBlock: number, toBlock: number): Promise<void> {
-    const logs = await this.provider.getLogs({
-      fromBlock,
-      toBlock,
-    });
-    let blockInserted = false;
+  private async handleLogs(logs: Log[]): Promise<void> {
     for (const log of logs) {
-      // insert block
-      if (!blockInserted) {
-        await this.blockRepository.insertBlock({
-          blockHash: log.blockHash,
-          chainId: this.config.CHAIN_ID,
-          blockNumber: log.blockNumber,
-        });
-        blockInserted = true;
-      }
-
+      logger.trace(log, "Handling the log");
       // if the log comes from the saleContract check if the log contains Claim event
       if (this.saleContractAddresses.includes(log.address)) {
         const parsedLog = await this.tokenSaleIface.parseLog(log);
-        logger.info(parsedLog, "Handle event");
+        logger.info(parsedLog, "Handling saleContract event");
 
         if (parsedLog.name === "Claim") {
           const data = {
@@ -138,11 +145,13 @@ export class Indexer {
         ].address
       ) {
         const parsedLog = await this.factoryIface.parseLog(log);
-        logger.info(parsedLog, "Handle event");
+        logger.info(parsedLog, "Handling factoryContract event");
 
         if (parsedLog.name === "CreatedSaleContract") {
           const saleContract = {
+            id: `${this.config.CHAIN_ID}_${parsedLog.args?.tokenSaleAddress}`,
             address: parsedLog.args?.tokenSaleAddress,
+            chainId: this.config.CHAIN_ID,
             blockHash: log.blockHash,
           };
 
@@ -152,15 +161,40 @@ export class Indexer {
       }
     }
   }
+
   private blockEventListener = async (blockNumber: number): Promise<void> => {
     logger.info(`New block is mined(${blockNumber})`);
-    await retry(
-      () => {
-        this.handleBlock(blockNumber, blockNumber);
-      },
-      {
-        retries: 3,
+    blockNumber = blockNumber - this.config.REORG_PROTECTION_COUNT;
+    try {
+      const logs = await retry(async () => {
+        return await this.provider.getLogs({
+          fromBlock: blockNumber,
+          toBlock: blockNumber,
+        });
+      });
+      if (logs.length) {
+        await this.blockRepository.insertBlock({
+          blockHash: logs[0].blockHash,
+          chainId: this.config.CHAIN_ID,
+          blockNumber: logs[0].blockNumber,
+        });
       }
+      this.handleLogs(logs);
+    } catch (err) {
+      // hack: insert for blockHash block number
+      await this.blockRepository.insertBlock({
+        blockHash: blockNumber.toString(),
+        chainId: this.config.CHAIN_ID,
+        blockNumber: blockNumber,
+        error: err.stack,
+      });
+    }
+  };
+
+  private getHeadBlock = async (): Promise<number> => {
+    return (
+      (await this.provider.getBlockNumber()) -
+      this.config.REORG_PROTECTION_COUNT
     );
   };
 }
