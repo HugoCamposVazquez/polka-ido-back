@@ -59,13 +59,13 @@ export class Indexer {
     });
   }
 
-  public async start(): Promise<void> {
+  public async start(fromToBlock?: number): Promise<void> {
     // subscribe on new block events and handle new blocks
     this.saleContractAddresses =
       await this.saleContractRepository.getAllAddresses();
 
     // process all unhandled blocks
-    await this.processPastClaimEvents();
+    await this.processPastClaimEvents(fromToBlock);
     this.provider.on("block", this.blockEventListener);
   }
 
@@ -74,12 +74,14 @@ export class Indexer {
     this.provider.off("block", this.blockEventListener);
   }
 
-  private async processPastClaimEvents(): Promise<void> {
+  private async processPastClaimEvents(fromToBlock?: number): Promise<void> {
     // fetch the latest block from database
-    const latestBlock = await this.blockRepository.getLatestBlock();
+    if (!fromToBlock) {
+      const latestBlock = await this.blockRepository.getLatestBlock();
 
-    let fromToBlock =
-      latestBlock?.blockNumber || this.config.FACTORY_DEPLOYMENT_BLOCK;
+      fromToBlock =
+        latestBlock?.blockNumber || this.config.FACTORY_DEPLOYMENT_BLOCK;
+    }
 
     try {
       while (this.fetchNewBlocks) {
