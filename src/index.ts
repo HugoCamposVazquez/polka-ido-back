@@ -2,7 +2,6 @@ import nodeCleanup from "node-cleanup";
 
 import { App } from "./App";
 import { Indexer } from "./moonbeam_indexer";
-import { BlockIndexer } from "./services/block-indexer";
 if (process.env.APP === "api") {
   App.init().then((app) => {
     nodeCleanup(function (exitCode, signal) {
