@@ -1,3 +1,5 @@
+import deployments from "@nodefactoryio/ryu-contracts/deployments/deployments.json";
+
 import { logger } from "./logger";
 
 export interface IRetryOptions {
@@ -45,4 +47,14 @@ export async function retry<A>(
     }
   }
   throw lastError;
+}
+
+export function getFactoryContractAddress(
+  chainId: number,
+  network: string,
+  factoryName: string
+): string {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return deployments[chainId][network].contracts[factoryName].address;
 }

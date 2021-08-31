@@ -1,16 +1,15 @@
 import { Log } from "@ethersproject/abstract-provider";
 import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContract.sol/SaleContract.json";
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
-import deployments from "@nodefactoryio/ryu-contracts/deployments/deployments.json";
-import Bull, { Queue } from "bull";
+import { Queue } from "bull";
 import { ethers } from "ethers";
 
 import { BlockRepository } from "../../repositories/BlockRepository";
 import { SaleContractRepository } from "../../repositories/SaleContractRepository";
 import { logger } from "../logger";
-import { retry } from "../utils";
+import { getFactoryContractAddress, retry } from "../utils";
 /* eslint-disable @typescript-eslint/naming-convention */
-interface Iconfig {
+export interface Iconfig {
   REDIS_HOST: string;
   REDIS_PORT: number;
   FACTORY_DEPLOYMENT_BLOCK: number;
@@ -22,28 +21,30 @@ interface Iconfig {
   REORG_PROTECTION_COUNT: number;
 }
 
-export class Indexer {
+export class BlockIndexer {
   private blockRepository: BlockRepository;
-  private saleContractRepository: SaleContractRepository;
-  private config: Iconfig;
+  public config: Iconfig;
   private provider!: ethers.providers.BaseProvider;
   private saleContractAddresses: string[];
-  private mintQueue: Queue;
+  private saleContractRepository;
+  public mintQueue: Queue;
   private tokenSaleIface: ethers.utils.Interface;
   private factoryIface: ethers.utils.Interface;
   private fetchNewBlocks = true;
   constructor(
     config: Iconfig,
     blockRepository: BlockRepository,
-    saleContractRepository: SaleContractRepository
+    saleContractAddresses: string[],
+    saleContractRepository: SaleContractRepository,
+    mintQueue: Queue
   ) {
     this.config = config;
     this.blockRepository = blockRepository;
+    this.saleContractAddresses = saleContractAddresses;
     this.saleContractRepository = saleContractRepository;
-    this.saleContractAddresses = [];
     this.tokenSaleIface = new ethers.utils.Interface(TokenSaleContract.abi);
     this.factoryIface = new ethers.utils.Interface(SwapFactoryContract.abi);
-
+    this.mintQueue = mintQueue;
     try {
       this.provider = new ethers.providers.JsonRpcProvider(
         this.config.NETWORK_URL,
@@ -53,16 +54,10 @@ export class Indexer {
       logger.error("Error occured during provider instantiation");
       throw err;
     }
-
-    this.mintQueue = new Bull("mint", {
-      redis: { host: this.config.REDIS_HOST, port: this.config.REDIS_PORT },
-    });
   }
 
   public async start(fromToBlock?: number): Promise<void> {
-    // subscribe on new block events and handle new blocks
-    this.saleContractAddresses =
-      await this.saleContractRepository.getAllAddresses();
+    // subsc
 
     // process all unhandled blocks
     await this.processPastClaimEvents(fromToBlock);
@@ -72,9 +67,10 @@ export class Indexer {
   public stop(): void {
     logger.info("Stop listening to all events");
     this.provider.off("block", this.blockEventListener);
+    this.fetchNewBlocks = false;
   }
 
-  private async processPastClaimEvents(fromToBlock?: number): Promise<void> {
+  public async processPastClaimEvents(fromToBlock?: number): Promise<void> {
     // fetch the latest block from database
     if (!fromToBlock) {
       const latestBlock = await this.blockRepository.getLatestBlock();
@@ -89,25 +85,11 @@ export class Indexer {
         if ((await retry(this.getHeadBlock)) < fromToBlock) {
           break;
         }
-
-        const logs = await retry(async () => {
-          return await this.provider.getLogs({
-            fromBlock: fromToBlock,
-            toBlock: fromToBlock,
-          });
-        });
-        // save block into database
-        if (logs.length) {
-          await this.blockRepository.insertBlock({
-            blockHash: logs[0].blockHash,
-            chainId: this.config.CHAIN_ID,
-            blockNumber: logs[0].blockNumber,
-          });
-        }
-        await this.handleLogs(logs);
+        this.handleBlock(fromToBlock);
         fromToBlock++;
       }
     } catch (err) {
+      logger.error(`Error while processing past claim events: ${err.stack}`);
       // hack: insert for blockHash block number
       await this.blockRepository.insertBlock({
         blockHash: fromToBlock.toString(),
@@ -140,11 +122,11 @@ export class Indexer {
         // if the log comes from factoryContract check if the log contains CreatedSaleContract event
       } else if (
         log.address ===
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        deployments[this.config.CHAIN_ID][this.config.NETWORK].contracts[
+        getFactoryContractAddress(
+          this.config.CHAIN_ID,
+          this.config.NETWORK,
           this.config.FACTORY_CONTRACT_NAME
-        ].address
+        )
       ) {
         const parsedLog = await this.factoryIface.parseLog(log);
         logger.info(parsedLog, "Handling factoryContract event");
@@ -164,24 +146,11 @@ export class Indexer {
     }
   }
 
-  private blockEventListener = async (blockNumber: number): Promise<void> => {
+  public blockEventListener = async (blockNumber: number): Promise<void> => {
     logger.info(`New block is mined(${blockNumber})`);
     blockNumber = blockNumber - this.config.REORG_PROTECTION_COUNT;
     try {
-      const logs = await retry(async () => {
-        return await this.provider.getLogs({
-          fromBlock: blockNumber,
-          toBlock: blockNumber,
-        });
-      });
-      if (logs.length) {
-        await this.blockRepository.insertBlock({
-          blockHash: logs[0].blockHash,
-          chainId: this.config.CHAIN_ID,
-          blockNumber: logs[0].blockNumber,
-        });
-      }
-      this.handleLogs(logs);
+      await this.handleBlock(blockNumber);
     } catch (err) {
       // hack: insert for blockHash block number
       await this.blockRepository.insertBlock({
@@ -192,6 +161,25 @@ export class Indexer {
       });
     }
   };
+
+  private async handleBlock(blockNumber: number): Promise<void> {
+    logger.info(`Started processing block number ${blockNumber}`);
+    const logs = await retry(async () => {
+      return await this.provider.getLogs({
+        fromBlock: blockNumber,
+        toBlock: blockNumber,
+      });
+    });
+    if (logs.length) {
+      await this.blockRepository.insertBlock({
+        blockHash: logs[0].blockHash,
+        chainId: this.config.CHAIN_ID,
+        blockNumber: logs[0].blockNumber,
+      });
+    }
+    await this.handleLogs(logs);
+    logger.info(`Block number ${blockNumber} has been processed`);
+  }
 
   private getHeadBlock = async (): Promise<number> => {
     return (
