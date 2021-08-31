@@ -60,11 +60,23 @@ export class StatemintWallet {
       if (status.isInvalid) {
         error = "Invalid transaction";
         currentTxDone = true;
-      } else if (status.isBroadcast) {
-        logger.info(txInfo, "Broadcasted transaction");
+      } else if (status.isInBlock) {
+        logger.info(
+          { txInfo: txInfo, blockHash: status.asInBlock },
+          "Transaction included in block"
+        );
       } else if (status.isFinalized) {
+        logger.info(
+          {
+            txInfo: txInfo,
+            blockHash: status.asFinalized,
+          },
+          `Transaction finalized`
+        );
+
         events.forEach(({ event }) => {
           if (event.method === "ExtrinsicFailed") {
+            console.log(JSON.stringify(event, null, 2));
             error = event.meta.documentation.toString();
           }
         });
@@ -74,7 +86,7 @@ export class StatemintWallet {
     };
 
     await tx.signAndSend(this.wallet, txStatusFunction);
-    await waitFor(() => currentTxDone, { timeout: 20000 });
+    await waitFor(() => currentTxDone, { timeout: 100000 });
 
     if (error) {
       throw new Error(error);

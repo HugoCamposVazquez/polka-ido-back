@@ -1,7 +1,7 @@
 import { BN } from "@polkadot/util";
 import { Job, Processor } from "bullmq";
 
-import { Claim, ClaimStatus } from "../../entities";
+import { ClaimStatus } from "../../entities";
 import { ClaimRepository } from "../../repositories/ClaimRepository";
 import { logger } from "../../services/logger";
 import { ClaimData } from "../../services/queue";
@@ -19,9 +19,8 @@ export function executeClaim(
       "Executing claim"
     );
 
-    let claim: Claim;
     try {
-      claim = await claimRepository.createClaim({
+      await claimRepository.createClaim({
         status: ClaimStatus.SUCCESSFUL,
         claimTxHash: job.data.claimTxHash,
         saleContractId: job.data.saleContractId,
@@ -37,13 +36,6 @@ export function executeClaim(
         `Successfully created claim`
       );
     } catch (error) {
-      await claimRepository.createClaim({
-        status: ClaimStatus.FAILED,
-        claimTxHash: job.data.claimTxHash,
-        saleContractId: job.data.saleContractId,
-        amount: job.data.amount,
-        receiver: job.data.receiver,
-      });
       logger.error(
         {
           stack: error.stack,
@@ -62,7 +54,7 @@ export function executeClaim(
         job.data.walletAddress,
         job.data.receiver,
         new BN(job.data.amount),
-        claim.claimTxHash
+        job.data.claimTxHash
       );
 
       logger.info(
@@ -74,7 +66,7 @@ export function executeClaim(
       );
     } catch (error) {
       await claimRepository.updateClaimStatus(
-        claim.claimTxHash,
+        job.data.claimTxHash,
         ClaimStatus.FAILED
       );
       logger.error(

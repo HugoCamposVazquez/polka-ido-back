@@ -35,11 +35,11 @@
     "task": "ts-node ./tasksfile.ts",
     "typeorm-ts": "ts-node ./node_modules/typeorm/cli.js",
     "seeder": "ts-node ./node_modules/typeorm-seeding/dist/cli.js",
-    "start:server": "node --inspect=0.0.0.0:56745 -r ts-node/register -r dotenv/config src/moonbeam_indexer.ts",
+    "start:server": "node --inspect=0.0.0.0:56745 -r ts-node/register -r dotenv/config src/index.ts",
     "nodemon": "cross-env NODE_ENV=development ./node_modules/nodemon/bin/nodemon.js"
   },
   "dependencies": {
-    "@nodefactoryio/ryu-contracts": "0.3.0",
+    "@nodefactoryio/ryu-contracts": "^0.4.0",
     "@polkadot/api": "^4.17.1",
     "@substrate/txwrapper-polkadot": "^1.2.5",
     "@types/bull": "^3.15.3",

@@ -5,7 +5,7 @@ export const config: fastifyEnvOpt = {
   schema: {
     type: "object",
     required: [
-      "STATEMINT_MINTING_WALLET_MNEMONIC",
+      "STATEMINT_MNEMONIC",
       "SWAP_FACTORY_ADDRESS",
       "FACTORY_DEPLOYMENT_BLOCK",
     ],
@@ -68,7 +68,7 @@ export const config: fastifyEnvOpt = {
         type: "string",
         default: "ws://127.0.0.1:9944",
       },
-      STATEMINT_MINTING_WALLET_MNEMONIC: {
+      STATEMINT_MNEMONIC: {
         type: "string",
       },
       PROCESSING_BLOCK_COUNT: {
@@ -98,7 +98,7 @@ declare module "fastify" {
       FACTORY_DEPLOYMENT_BLOCK: number;
       MINT_ATTEMPTS: number;
       STATEMINT_NETWORK_URL: string;
-      STATEMINT_MINTING_WALLET_MNEMONIC: string;
+      STATEMINT_MNEMONIC: string;
       PROCESSING_BLOCK_COUNT: number;
     };
   }

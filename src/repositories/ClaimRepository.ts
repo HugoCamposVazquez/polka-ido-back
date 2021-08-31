@@ -1,4 +1,4 @@
-import { EntityRepository, Repository } from "typeorm";
+import { EntityRepository, InsertResult, Repository } from "typeorm";
 
 import { Claim, ClaimStatus } from "../entities";
 
@@ -10,9 +10,9 @@ export class ClaimRepository extends Repository<Claim> {
     claimTxHash: string;
     saleContractId: number;
     status: ClaimStatus;
-  }): Promise<Claim> {
+  }): Promise<InsertResult> {
     const createdClaim = this.create(claim);
-    return this.save(createdClaim);
+    return this.insert(createdClaim);
   }
 
   public async updateClaimStatus(
