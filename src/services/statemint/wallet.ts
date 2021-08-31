@@ -7,17 +7,22 @@ import { logger } from "../logger";
 import { waitFor } from "../utils";
 
 export class StatemintWallet {
-  private wallet: AddressOrPair;
+  private mnemonic: string;
+
   private api!: ApiPromise;
+  private wallet!: AddressOrPair;
 
   constructor(mnemonic: string) {
-    const keyring = new Keyring({ type: "sr25519" });
-    this.wallet = keyring.addFromUri(mnemonic);
+    this.mnemonic = mnemonic;
   }
 
   public async initWallet(statemintUrl: string): Promise<void> {
     const wsProvider = new WsProvider(statemintUrl);
+    await wsProvider.isReady;
     this.api = await ApiPromise.create({ provider: wsProvider });
+
+    const keyring = new Keyring({ type: "sr25519" });
+    this.wallet = keyring.addFromUri(this.mnemonic);
   }
 
   public async transferFrom(
