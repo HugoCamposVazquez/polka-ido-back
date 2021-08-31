@@ -4,7 +4,7 @@ import sinon from "sinon";
 import { SinonStubbedInstance } from "sinon";
 
 import { executeClaim } from "../../../src/commands/claimExecutor/executor";
-import { Claim, ClaimStatus } from "../../../src/entities";
+import { ClaimStatus } from "../../../src/entities";
 import { ClaimRepository } from "../../../src/repositories/ClaimRepository";
 import { logger } from "../../../src/services/logger";
 import { ClaimData } from "../../../src/services/queue";
@@ -27,9 +27,7 @@ describe("Execute claim function", function () {
       walletStub as unknown as StatemintWallet,
       claimRepositoryStub as unknown as ClaimRepository
     );
-    claimRepositoryStub.createClaim.resolves({
-      claimTxHash: "hash",
-    } as Claim);
+    claimRepositoryStub.createClaim.resolves();
     walletStub.transferFrom.resolves();
   });
 
@@ -55,7 +53,7 @@ describe("Execute claim function", function () {
     expect(walletStub.transferFrom.callCount).to.be.deep.equal(1);
   });
 
-  it("Inserts failed claim and does not transfer tokens if claim invalid", async function () {
+  it("Does not insert claim and does not transfer tokens if claim invalid", async function () {
     claimRepositoryStub.createClaim.onFirstCall().throws();
 
     await claimProcessor({
@@ -67,19 +65,14 @@ describe("Execute claim function", function () {
       },
     } as Job);
 
-    expect(claimRepositoryStub.createClaim.callCount).to.be.deep.equal(2);
-    expect(claimRepositoryStub.createClaim.args[1][0].status).to.be.deep.equal(
-      ClaimStatus.FAILED
-    );
+    expect(claimRepositoryStub.createClaim.callCount).to.be.deep.equal(1);
     expect(walletStub.transferFrom.callCount).to.be.deep.equal(0);
     expect(claimRepositoryStub.updateClaimStatus.callCount).to.be.deep.equal(0);
   });
 
   it("Inserts successful claim and updates status to failed if transfer fails", async function () {
     walletStub.transferFrom.throws();
-    claimRepositoryStub.createClaim.resolves({
-      claimTxHash: "hash",
-    } as Claim);
+    claimRepositoryStub.createClaim.resolves();
 
     await claimProcessor({
       data: {
