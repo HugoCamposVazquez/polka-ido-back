@@ -1,14 +1,14 @@
-import { App } from "../../src/App";
-
-let instance: App;
-
-export const app = (): App => instance;
+import { Indexer } from "../../src/moonbeam_indexer";
+let instance: Indexer;
+let indexer: Indexer;
+export const app = (): Indexer => instance;
 
 before(async () => {
-  instance = await App.init();
-  await instance.start();
+  indexer = new Indexer();
+  await indexer.init();
+  instance = indexer;
 });
 
 after(async () => {
-  await instance.stop("TEST");
+  await indexer?.stop();
 });
