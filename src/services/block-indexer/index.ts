@@ -59,13 +59,19 @@ export class BlockIndexer {
   public async start(fromBlock?: number, toBlock?: number): Promise<void> {
     // process all unhandled blocks
     await this.processPastClaimEvents(fromBlock, toBlock);
-    this.provider.on("block", this.blockEventListener);
+
+    if (this.fetchNewBlocks) {
+      this.provider.on("block", this.blockEventListener);
+    }
   }
 
   public stop(): void {
     logger.info("Stop listening to all events");
-    this.provider.off("block", this.blockEventListener);
     this.fetchNewBlocks = false;
+    // unsubscribe only if already subscribed
+    if (this.provider._events.length > 0) {
+      this.provider.off("block", this.blockEventListener);
+    }
   }
 
   public async processPastClaimEvents(
@@ -89,7 +95,7 @@ export class BlockIndexer {
           break;
         }
 
-        this.handleBlock(fromBlock);
+        await this.handleBlock(fromBlock);
         fromBlock++;
       }
     } catch (err) {
@@ -109,7 +115,7 @@ export class BlockIndexer {
     for (const log of logs) {
       logger.trace(log, "Handling the log");
       // if the log comes from the saleContract check if the log contains Claim event
-      if (this.saleContractAddresses.includes(log.address)) {
+      if (this.saleContractAddresses.includes(log.address.toLowerCase())) {
         const parsedLog = await this.tokenSaleIface.parseLog(log);
         logger.info(parsedLog, "Handling saleContract event");
 

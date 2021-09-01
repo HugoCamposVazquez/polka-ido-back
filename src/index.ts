@@ -15,8 +15,8 @@ if (process.env.APP === "api") {
 } else if (process.env.APP === "indexer") {
   const app = new Indexer();
   app.init().then(async () => {
-    nodeCleanup(function (exitCode, signal) {
-      app.stop(signal as string);
+    nodeCleanup(function () {
+      app.stop();
       nodeCleanup.uninstall();
       return false;
     });
