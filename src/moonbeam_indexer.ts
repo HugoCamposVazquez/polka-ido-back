@@ -37,15 +37,15 @@ export class Indexer {
 
   public async start(fromBlock?: number, toBlock?: number): Promise<void> {
     try {
-      const salecontractRepo = this.instance.db?.getCustomRepository(
+      const salecontractRepo = this.instance.db.getCustomRepository(
         SaleContractRepository
       );
       // get saleContract addresses
-      const saleContractAddresses = await salecontractRepo?.getAllAddresses();
+      const saleContractAddresses = await salecontractRepo.getAllAddresses();
 
       this.instance.blockIndexer = new BlockIndexer(
         this.instance.config,
-        this.instance.db?.getCustomRepository(BlockRepository),
+        this.instance.db.getCustomRepository(BlockRepository),
         saleContractAddresses,
         salecontractRepo,
         this.instance.mintQueue
