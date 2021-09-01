@@ -4,14 +4,14 @@ services:
     build:
       context: .
       target: dev
-    command: sh -c "yarn run nodemon indexer.js"
+    command: sh -c "yarn run nodemon index.js"
     image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
     container_name: "${BACKEND_CONTAINER_NAME:-nodejs-backend}"
     depends_on:
       - db
     volumes:
           - .:/usr/app
-          - /usr/src/app/node_modules
+          - node_modules:/usr/app/node_modules
     ports:
           - "${BACKEND_LOCAL_PORT:-3000}:${SERVER_PORT:-3000}"
           - "${DEBUG_PORT:-56745}:56745"
