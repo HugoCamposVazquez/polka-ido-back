@@ -56,9 +56,9 @@ export class BlockIndexer {
     }
   }
 
-  public async start(fromToBlock?: number): Promise<void> {
+  public async start(fromBlock?: number, toBlock?: number): Promise<void> {
     // process all unhandled blocks
-    await this.processPastClaimEvents(fromToBlock);
+    await this.processPastClaimEvents(fromBlock, toBlock);
     this.provider.on("block", this.blockEventListener);
   }
 
@@ -68,34 +68,40 @@ export class BlockIndexer {
     this.fetchNewBlocks = false;
   }
 
-  public async processPastClaimEvents(fromToBlock?: number): Promise<void> {
+  public async processPastClaimEvents(
+    fromBlock?: number,
+    toBlock?: number
+  ): Promise<void> {
     // fetch the latest block from database
-    if (!fromToBlock) {
+
+    if (!fromBlock) {
       const latestBlock = await this.blockRepository.getLatestBlock();
 
-      fromToBlock =
+      fromBlock =
         latestBlock?.blockNumber || this.config.FACTORY_DEPLOYMENT_BLOCK;
     }
 
     try {
       while (this.fetchNewBlocks) {
+        const headBlock = toBlock || (await retry(this.getHeadBlock));
         // break when all past blocks processed
-        if ((await retry(this.getHeadBlock)) < fromToBlock) {
+        if (headBlock < fromBlock) {
           break;
         }
-        this.handleBlock(fromToBlock);
-        fromToBlock++;
+
+        this.handleBlock(fromBlock);
+        fromBlock++;
       }
     } catch (err) {
       logger.error(`Error while processing past claim events: ${err.stack}`);
       // hack: insert for blockHash block number
       await this.blockRepository.insertBlock({
-        blockHash: fromToBlock.toString(),
+        blockHash: fromBlock.toString(),
         chainId: this.config.CHAIN_ID,
-        blockNumber: fromToBlock,
+        blockNumber: fromBlock,
         error: err.stack,
       });
-      fromToBlock++;
+      fromBlock++;
     }
   }
 

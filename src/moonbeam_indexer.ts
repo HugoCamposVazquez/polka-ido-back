@@ -28,7 +28,7 @@ export class Indexer {
     });
   }
 
-  public async start(fromToBlock?: number): Promise<void> {
+  public async start(fromBlock?: number, toBlock?: number): Promise<void> {
     try {
       const salecontractRepo = this.instance.db.getCustomRepository(
         SaleContractRepository
@@ -45,7 +45,10 @@ export class Indexer {
       );
 
       // process all unhandled blocks
-      await this.instance.blockIndexer.processPastClaimEvents(fromToBlock);
+      await this.instance.blockIndexer.processPastClaimEvents(
+        fromBlock,
+        toBlock
+      );
       const provider = new ethers.providers.JsonRpcProvider(
         this.instance.config.NETWORK_URL,
         this.instance.config.CHAIN_ID
@@ -62,7 +65,7 @@ export class Indexer {
 
   public async stop(signal: string | undefined): Promise<void> {
     await this.instance.db
-      .close()
+      ?.close()
       .catch((error: Error) =>
         logger.error(
           `Error occurred during database closing because: ${error.message}`
