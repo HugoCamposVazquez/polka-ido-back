@@ -26,7 +26,7 @@
     "test:unit": "NODE_ENV=test nyc --all --include \"src/**/*.ts\"  mocha -r ts-node/register \"test/unit/**/*.spec.ts\"",
     "test:unit:ci": "NODE_ENV=test nyc --reporter=lcov --all --include \"src/**/*.ts\"  mocha -r ts-node/register \"test/unit/**/*.spec.ts\"",
     "test:e2e": "SERVER_PORT=0 mocha --timeout 30000 -r ts-node/register -r dotenv/config \"test/e2e/**/*.spec.ts\"",
-    "prepare": "env-prompt -d .env.sample && task build",
+    "prestart:dev": "env-prompt -d .env.sample && task build",
     "init": "mkdir dist",
     "prebuild": "yarn run clean && yarn run init",
     "build": "tsc -p tsconfig.build.json --sourceMap --outDir dist",
@@ -36,9 +36,16 @@
     "typeorm-ts": "ts-node ./node_modules/typeorm/cli.js",
     "seeder": "ts-node ./node_modules/typeorm-seeding/dist/cli.js",
     "start:server": "node --inspect=0.0.0.0:56745 -r ts-node/register -r dotenv/config src/index.ts",
+    "start:api": "node --inspect=0.0.0.0:56745 -r ts-node/register -r dotenv/config src/index.ts",
     "nodemon": "cross-env NODE_ENV=development ./node_modules/nodemon/bin/nodemon.js"
   },
   "dependencies": {
+    "@nodefactoryio/ryu-contracts": "0.4.0",
+    "@polkadot/api": "^4.17.1",
+    "@substrate/txwrapper-polkadot": "^1.2.5",
+    "bull": "^3.22.9",
+    "env-schema": "^3.3.0",
+    "ethers": "^5.3.1",
     "fastify": "^3.17.0",
     "fastify-compress": "^3.5.0",
     "fastify-cors": "^6.0.1",
@@ -49,6 +56,7 @@
     "fastify-metrics": "^7.2.1",
     "fastify-sensible": "^3.1.1",
     "fastify-swagger": "^4.7.0",
+    "nestjs-typeorm-paginate": "^2.6.0",
     "node-cleanup": "^2.1.2",
     "pg": "^8.6.0",
     "pg-native": "^3.0.0",
@@ -59,6 +67,7 @@
     "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
+    "@types/bull": "^3.15.3",
     "@types/chai": "^4.2.14",
     "@types/faker": "^5.1.5",
     "@types/mocha": "^8.2.0",

@@ -17,7 +17,6 @@ import { routesPlugin } from "./services/plugins/routes";
 import { SWAGGER_CONFIG } from "./services/swagger";
 export class App {
   public readonly instance: FastifyInstance;
-
   protected constructor(instance: FastifyInstance) {
     this.instance = instance;
   }
@@ -40,6 +39,7 @@ export class App {
     try {
       await this.initDb();
       await this.instance.ready();
+
       logger.info(this.instance.printRoutes());
       return new Promise((resolve, reject) => {
         this.instance.listen(

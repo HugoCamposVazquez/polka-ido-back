@@ -10,6 +10,7 @@
     "emitDecoratorMetadata": true,
     "strict": true,
     "noImplicitAny": true,
+    "resolveJsonModule": true,
     "typeRoots": [
       "./node_modules/@types",
       "./@types"

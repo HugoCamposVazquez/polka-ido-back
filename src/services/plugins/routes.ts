@@ -1,10 +1,8 @@
 import { FastifyPluginAsync } from "fastify";
 
-import { registerRoutes } from "../../routes";
 import { onlyWhitelisted } from "../metrics/auth";
 
 export const routesPlugin: FastifyPluginAsync = async function (instance) {
-  registerRoutes(instance);
   instance.route({
     url: "/metrics",
     method: "GET",
