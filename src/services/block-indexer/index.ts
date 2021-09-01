@@ -57,8 +57,6 @@ export class BlockIndexer {
   }
 
   public async start(fromToBlock?: number): Promise<void> {
-    // subsc
-
     // process all unhandled blocks
     await this.processPastClaimEvents(fromToBlock);
     this.provider.on("block", this.blockEventListener);
