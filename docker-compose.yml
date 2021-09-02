@@ -32,8 +32,6 @@ services:
     command: redis-server
     ports:
       - ${REDIS_PORT:-8888}:6379
-    volumes:
-      - redis:/data
       
 volumes:
   node_modules:
