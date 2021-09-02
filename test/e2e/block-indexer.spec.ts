@@ -5,6 +5,7 @@ import sinon from "sinon";
 import { Block } from "../../src/entities";
 import { BlockRepository } from "../../src/repositories/BlockRepository";
 import { SaleContractRepository } from "../../src/repositories/SaleContractRepository";
+import { QueueType } from "../../src/services/queue";
 import * as utils from "../../src/services/utils";
 
 import { app } from "./app-setup";
@@ -13,7 +14,7 @@ describe("Block-indexer e2e test", async function () {
   // factoryContract address that is used to create saleContracts
   const factoryContractAddress = "0x89E1C97c58f7e454A1B05A3080E35d74Bce01b82";
   // eslint-disable-next-line
-  let mintQueue: Queue<any>;
+  let mintQueue: Queue<QueueType.CLAIM_EXECUTOR>;
   let saleContractRepo: SaleContractRepository;
   let blockRepo: BlockRepository;
   before(async function () {
@@ -25,24 +26,33 @@ describe("Block-indexer e2e test", async function () {
     blockRepo = await conf.db.getCustomRepository(BlockRepository);
   });
 
+  beforeEach(async function () {
+    sinon.stub(utils, "getFactoryContractAddress").callsFake(() => {
+      return factoryContractAddress;
+    });
+  });
+
+  afterEach(async function () {
+    // stop processing blocks and unsubscribe
+    await app().instanceHandlers.blockIndexer.stop();
+    sinon.restore();
+  });
+
   it("should process SaleCreated", async function () {
     const fromBlock = 664365;
     const toBlock = 664367;
     app().start(fromBlock, toBlock);
-    sinon.stub(utils, "getFactoryContractAddress").callsFake(() => {
-      return factoryContractAddress;
-    });
     // after 2 seconds of processing blocks return saleContracts and blocks that are processed
     const {
       saleContracts,
       blocks,
     }: { saleContracts: string[]; blocks: Block[] } = await new Promise(
       (resolve) =>
-        setTimeout(async () => {
+        app().instanceHandlers.emiter.on("processingBlocksDone", async () => {
           const saleContracts = await saleContractRepo.getAllAddresses();
           const blocks = await blockRepo.find();
           resolve({ saleContracts, blocks });
-        }, 2000)
+        })
     );
     expect(saleContracts.length).to.equal(2);
     expect(saleContracts).to.be.deep.equal([
@@ -69,9 +79,6 @@ describe("Block-indexer e2e test", async function () {
         "0xb947a8cc409cee266b89b3e82a245011eb6f5191b4bb86103382f06508181588",
       blockNumber: 664367,
     });
-
-    // stop processing blocks and unsubscribe
-    app().instanceHandlers.blockIndexer.stop();
   });
 
   it("should process claim events", async function () {
@@ -81,7 +88,7 @@ describe("Block-indexer e2e test", async function () {
     app().start(fromBlock, toBlock);
     // process blocks for 2sec
     let jobs: Job[] = await new Promise((resolve) =>
-      setTimeout(async () => {
+      app().instanceHandlers.emiter.on("processingBlocksDone", async () => {
         const jobs = await mintQueue.getJobs([
           "completed",
           "waiting",
@@ -91,7 +98,7 @@ describe("Block-indexer e2e test", async function () {
           "paused",
         ]);
         resolve(jobs);
-      }, 2000)
+      })
     );
 
     jobs = jobs.map((job) => job.data);

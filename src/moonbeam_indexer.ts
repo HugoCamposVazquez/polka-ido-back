@@ -1,3 +1,5 @@
+import EventEmitter from "events";
+
 import Bull, { Queue } from "bull";
 import envSchema from "env-schema";
 import { Connection } from "typeorm";
@@ -8,13 +10,15 @@ import { SaleContractRepository } from "./repositories/SaleContractRepository";
 import { BlockIndexer } from "./services/block-indexer";
 import { getDatabaseConnection } from "./services/db";
 import { logger } from "./services/logger";
+import { QueueType } from "./services/queue";
 
 interface Iinstance {
   db: Connection;
   blockIndexer: BlockIndexer;
   // eslint-disable-next-line
-  mintQueue: Queue<any>;
+  mintQueue: Queue<QueueType.CLAIM_EXECUTOR>;
   config: Env;
+  emiter: EventEmitter;
 }
 export class Indexer {
   // eslint-disable-next-line
@@ -28,12 +32,13 @@ export class Indexer {
     this.instance.db = await getDatabaseConnection();
     await this.instance.db.runMigrations({ transaction: "all" });
 
-    this.instance.mintQueue = new Bull("mint", {
+    this.instance.mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
       redis: {
         host: this.instance.config.REDIS_HOST,
         port: this.instance.config.REDIS_PORT,
       },
     });
+    this.instance.emiter = new EventEmitter();
   }
 
   public async start(fromBlock?: number, toBlock?: number): Promise<void> {
@@ -51,9 +56,12 @@ export class Indexer {
         salecontractRepo,
         this.instance.mintQueue
       );
-
       // process all unhandled blocks
-      await this.instance.blockIndexer.start(fromBlock, toBlock);
+      await this.instance.blockIndexer.start(
+        this.instance.emiter,
+        fromBlock,
+        toBlock
+      );
     } catch (error) {
       logger.error(
         `Error occurred during app startup because of: ${error.stack}`
@@ -70,20 +78,23 @@ export class Indexer {
         logger.error(`Error occurred during indexer stoppage: ${e.message}`);
       }
 
-      try {
-        await this.instance.db?.close();
-      } catch (error) {
-        logger.error(
-          `Error occurred during database closing because: ${error.message}`
-        );
-      }
-      try {
-        await this.instance.mintQueue?.close();
-      } catch (error) {
-        logger.error(
-          `Error occurred during redis closing because: ${error.message}`
-        );
-      }
+      this.instance.emiter.on("processingBlocksDone", async () => {
+        try {
+          await this.instance.db?.close();
+        } catch (error) {
+          logger.error(
+            `Error occurred during database closing because: ${error.message}`
+          );
+        }
+        try {
+          await this.instance.mintQueue?.close();
+        } catch (error) {
+          logger.error(
+            `Error occurred during redis closing because: ${error.message}`
+          );
+        }
+      });
+
       this.stopped = true;
     }
   }

@@ -1,3 +1,5 @@
+import EventEmitter from "events";
+
 import { Log } from "@ethersproject/abstract-provider";
 import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContract.sol/SaleContract.json";
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
@@ -56,10 +58,14 @@ export class BlockIndexer {
     }
   }
 
-  public async start(fromBlock?: number, toBlock?: number): Promise<void> {
+  public async start(
+    emiter: EventEmitter,
+    fromBlock?: number,
+    toBlock?: number
+  ): Promise<void> {
     // process all unhandled blocks
-    await this.processPastClaimEvents(fromBlock, toBlock);
-
+    await this.processBlocks(fromBlock, toBlock);
+    emiter.emit("processingBlocksDone");
     if (this.fetchNewBlocks) {
       this.provider.on("block", this.blockEventListener);
     }
@@ -69,12 +75,10 @@ export class BlockIndexer {
     logger.info("Stop listening to all events");
     this.fetchNewBlocks = false;
     // unsubscribe only if already subscribed
-    if (this.provider._events.length > 0) {
-      this.provider.off("block", this.blockEventListener);
-    }
+    this.provider.off("block", this.blockEventListener);
   }
 
-  public async processPastClaimEvents(
+  public async processBlocks(
     fromBlock?: number,
     toBlock?: number
   ): Promise<void> {
