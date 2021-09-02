@@ -12,95 +12,87 @@ import { getDatabaseConnection } from "./services/db";
 import { logger } from "./services/logger";
 import { QueueType } from "./services/queue";
 
-interface Iinstance {
-  db: Connection;
-  blockIndexer: BlockIndexer;
-  // eslint-disable-next-line
-  mintQueue: Queue<QueueType.CLAIM_EXECUTOR>;
-  config: Env;
-  emiter: EventEmitter;
+async function main(): Promise<void> {
+  const config = envSchema<Env>(blockIndexerConfig);
+  const db = await getDatabaseConnection();
+  await db.runMigrations({ transaction: "all" });
+
+  const mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
+    redis: {
+      host: config.REDIS_HOST,
+      port: config.REDIS_PORT,
+    },
+  });
+  const emiter = new EventEmitter();
+  const salecontractRepo = db.getCustomRepository(SaleContractRepository);
+  // get saleContract addresses
+  const saleContractAddresses = await salecontractRepo.getAllAddresses();
+
+  const blockIndexer = new BlockIndexer(
+    config,
+    db.getCustomRepository(BlockRepository),
+    saleContractAddresses,
+    salecontractRepo,
+    mintQueue
+  );
+  // process all unhandled blocks
+  await blockIndexer.start(emiter);
+
+  //do something when app is closing
+  process.on("exit", async function () {
+    await stop(blockIndexer, db, emiter, mintQueue);
+  });
+
+  //catches ctrl+c event
+  process.on("SIGINT", async function () {
+    await stop(blockIndexer, db, emiter, mintQueue);
+  });
+
+  // catches "kill pid" (for example: nodemon restart)
+  process.on("SIGUSR1", async function () {
+    await stop(blockIndexer, db, emiter, mintQueue);
+  });
+
+  process.on("SIGUSR2", async function () {
+    await stop(blockIndexer, db, emiter, mintQueue);
+  });
+
+  //catches uncaught exceptions
+  process.on("uncaughtException", async function () {
+    await stop(blockIndexer, db, emiter, mintQueue);
+  });
 }
-export class Indexer {
-  // eslint-disable-next-line
-  public readonly instance: Partial<Iinstance>;
-  private stopped = false;
-  constructor() {
-    this.instance = {};
-  }
-  public async init(): Promise<void> {
-    this.instance.config = envSchema<Env>(blockIndexerConfig);
-    this.instance.db = await getDatabaseConnection();
-    await this.instance.db.runMigrations({ transaction: "all" });
 
-    this.instance.mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
-      redis: {
-        host: this.instance.config.REDIS_HOST,
-        port: this.instance.config.REDIS_PORT,
-      },
-    });
-    this.instance.emiter = new EventEmitter();
+async function stop(
+  blockIndexer?: BlockIndexer,
+  db?: Connection,
+  emiter?: EventEmitter,
+  mintQueue?: Queue<QueueType>
+): Promise<void> {
+  try {
+    await blockIndexer?.stop();
+  } catch (e) {
+    logger.error(`Error occurred during indexer stoppage: ${e.message}`);
   }
 
-  public async start(fromBlock?: number, toBlock?: number): Promise<void> {
+  emiter?.on("processingBlocksDone", async () => {
     try {
-      const salecontractRepo = this.instance.db.getCustomRepository(
-        SaleContractRepository
-      );
-      // get saleContract addresses
-      const saleContractAddresses = await salecontractRepo.getAllAddresses();
-
-      this.instance.blockIndexer = new BlockIndexer(
-        this.instance.config,
-        this.instance.db.getCustomRepository(BlockRepository),
-        saleContractAddresses,
-        salecontractRepo,
-        this.instance.mintQueue
-      );
-      // process all unhandled blocks
-      await this.instance.blockIndexer.start(
-        this.instance.emiter,
-        fromBlock,
-        toBlock
-      );
+      await db?.close();
     } catch (error) {
       logger.error(
-        `Error occurred during app startup because of: ${error.stack}`
+        `Error occurred during database closing because: ${error.message}`
       );
-      this.stop();
     }
-  }
-
-  public async stop(): Promise<void> {
-    if (!this.stopped) {
-      try {
-        this.instance.blockIndexer?.stop();
-      } catch (e) {
-        logger.error(`Error occurred during indexer stoppage: ${e.message}`);
-      }
-
-      this.instance.emiter.on("processingBlocksDone", async () => {
-        try {
-          await this.instance.db?.close();
-        } catch (error) {
-          logger.error(
-            `Error occurred during database closing because: ${error.message}`
-          );
-        }
-        try {
-          await this.instance.mintQueue?.close();
-        } catch (error) {
-          logger.error(
-            `Error occurred during redis closing because: ${error.message}`
-          );
-        }
-      });
-
-      this.stopped = true;
+    try {
+      await mintQueue?.close();
+    } catch (error) {
+      logger.error(
+        `Error occurred during redis closing because: ${error.message}`
+      );
     }
-  }
-
-  // mostly for testing purposes
-  get instanceHandlers(): Iinstance {
-    return this.instance;
-  }
+  });
 }
+
+main().then(() => {
+  logger.info("Block indexer started");
+});

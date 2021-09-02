@@ -4,7 +4,7 @@ services:
     build:
       context: .
       target: dev
-    command: sh -c "yarn run nodemon index.js"
+    command: sh -c "yarn run nodemon moonbeam_indexer.js"
     image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
     container_name: "${BACKEND_CONTAINER_NAME:-nodejs-backend}"
     depends_on:

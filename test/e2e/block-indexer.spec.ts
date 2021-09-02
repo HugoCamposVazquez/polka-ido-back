@@ -1,29 +1,77 @@
-import { Job, Queue } from "bull";
-import { expect } from "chai";
-import sinon from "sinon";
+import EventEmitter from "events";
 
+import Bull, { Job, Queue } from "bull";
+import { expect } from "chai";
+import envSchema from "env-schema";
+import sinon from "sinon";
+import { Connection } from "typeorm";
+
+import { blockIndexerConfig, Env } from "../../src/config";
 import { Block } from "../../src/entities";
 import { BlockRepository } from "../../src/repositories/BlockRepository";
 import { SaleContractRepository } from "../../src/repositories/SaleContractRepository";
+import { BlockIndexer } from "../../src/services/block-indexer";
+import { getDatabaseConnection } from "../../src/services/db";
+import { logger } from "../../src/services/logger";
 import { QueueType } from "../../src/services/queue";
 import * as utils from "../../src/services/utils";
-
-import { app } from "./app-setup";
 
 describe("Block-indexer e2e test", async function () {
   // factoryContract address that is used to create saleContracts
   const factoryContractAddress = "0x89E1C97c58f7e454A1B05A3080E35d74Bce01b82";
-  // eslint-disable-next-line
   let mintQueue: Queue<QueueType.CLAIM_EXECUTOR>;
   let saleContractRepo: SaleContractRepository;
   let blockRepo: BlockRepository;
+  let config: Env;
+  let blockIndexer: BlockIndexer;
+  let db: Connection;
+  let emiter: EventEmitter;
+
   before(async function () {
-    const conf = await app().instanceHandlers;
-    mintQueue = conf.mintQueue;
-    saleContractRepo = await conf.db.getCustomRepository(
-      SaleContractRepository
+    config = envSchema<Env>(blockIndexerConfig);
+    db = await getDatabaseConnection();
+
+    mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
+      redis: {
+        host: config.REDIS_HOST,
+        port: config.REDIS_PORT,
+      },
+    });
+    emiter = new EventEmitter();
+    saleContractRepo = db.getCustomRepository(SaleContractRepository);
+    // get saleContract addresses
+    const saleContractAddresses = await saleContractRepo.getAllAddresses();
+    blockRepo = db.getCustomRepository(BlockRepository);
+    blockIndexer = new BlockIndexer(
+      config,
+      blockRepo,
+      saleContractAddresses,
+      saleContractRepo,
+      mintQueue
     );
-    blockRepo = await conf.db.getCustomRepository(BlockRepository);
+  });
+
+  after(async function () {
+    try {
+      await blockIndexer?.stop();
+    } catch (e) {
+      logger.error(`Error occurred during indexer stoppage: ${e.message}`);
+    }
+
+    try {
+      await db?.close();
+    } catch (error) {
+      logger.error(
+        `Error occurred during database closing because: ${error.message}`
+      );
+    }
+    try {
+      await mintQueue?.close();
+    } catch (error) {
+      logger.error(
+        `Error occurred during redis closing because: ${error.message}`
+      );
+    }
   });
 
   beforeEach(async function () {
@@ -34,21 +82,21 @@ describe("Block-indexer e2e test", async function () {
 
   afterEach(async function () {
     // stop processing blocks and unsubscribe
-    await app().instanceHandlers.blockIndexer.stop();
+    await blockIndexer.stop();
     sinon.restore();
   });
 
   it("should process SaleCreated", async function () {
     const fromBlock = 664365;
     const toBlock = 664367;
-    app().start(fromBlock, toBlock);
+    blockIndexer.start(emiter, fromBlock, toBlock);
     // after 2 seconds of processing blocks return saleContracts and blocks that are processed
     const {
       saleContracts,
       blocks,
     }: { saleContracts: string[]; blocks: Block[] } = await new Promise(
       (resolve) =>
-        app().instanceHandlers.emiter.on("processingBlocksDone", async () => {
+        emiter.on("processingBlocksDone", async () => {
           const saleContracts = await saleContractRepo.getAllAddresses();
           const blocks = await blockRepo.find();
           resolve({ saleContracts, blocks });
@@ -85,10 +133,10 @@ describe("Block-indexer e2e test", async function () {
     const fromBlock = 664443;
     const toBlock = 664444;
 
-    app().start(fromBlock, toBlock);
+    blockIndexer.start(emiter, fromBlock, toBlock);
     // process blocks for 2sec
     let jobs: Job[] = await new Promise((resolve) =>
-      app().instanceHandlers.emiter.on("processingBlocksDone", async () => {
+      emiter.on("processingBlocksDone", async () => {
         const jobs = await mintQueue.getJobs([
           "completed",
           "waiting",
