@@ -8,6 +8,5 @@ define(Block, (faker) => {
     min: 400000,
     max: 500000,
   });
-  block.blockTime = new Date();
   return block;
 });

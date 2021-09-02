@@ -5,6 +5,7 @@ import { SaleContract } from "../entities";
 
 type SaleContractData = {
   address: string;
+  chainId: number;
   blockHash: string;
   id: number;
   walletAddress: string;
@@ -30,7 +31,11 @@ export class SaleContractRepository extends Repository<SaleContract> {
     return await this.save(saleContractInstance);
   }
 
-  public async getAllAddresses(): Promise<SaleContract[]> {
-    return await this.find({ select: ["address"] });
+  public async getAllAddresses(): Promise<string[]> {
+    const contracts = await this.find({ select: ["address"] });
+    const addresses = contracts.map((contract) =>
+      contract.address.toLowerCase()
+    );
+    return addresses;
   }
 }

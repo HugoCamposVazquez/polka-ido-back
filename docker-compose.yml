@@ -1,11 +1,11 @@
 version: "3.4"
 services:
-  backend:
+  block-indexer:
     build:
       context: .
       target: dev
-    command: sh -c "yarn run nodemon"
-    image: nodefactory/nodejs-ts-starter:${IMAGE_TAG:-latest}
+    command: sh -c "yarn run nodemon index.js"
+    image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
     container_name: "${BACKEND_CONTAINER_NAME:-nodejs-backend}"
     depends_on:
       - db

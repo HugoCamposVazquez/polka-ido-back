@@ -5,14 +5,14 @@ export class Block {
   @PrimaryColumn()
   public blockHash!: string;
 
-  @Column("varchar")
+  @Column("integer")
   public chainId!: number;
 
-  @Column("varchar")
-  public blockTime!: Date;
-
-  @Column("varchar")
+  @Column("integer")
   public blockNumber!: number;
+
+  @Column({ type: "varchar", nullable: true })
+  public error!: string;
 
   @CreateDateColumn()
   public createdAt!: Date;

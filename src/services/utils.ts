@@ -1,3 +1,7 @@
+import deployments from "@nodefactoryio/ryu-contracts/deployments/deployments.json";
+
+import { logger } from "./logger";
+
 export interface IRetryOptions {
   /**
    * The maximum amount of times to retry the operation. Default is 5
@@ -56,6 +60,7 @@ export async function retry<A>(
       return await fn(i);
     } catch (e) {
       lastError = e as Error;
+      logger.warn(e);
       if (shouldRetry && !shouldRetry(lastError)) {
         break;
       }
@@ -64,6 +69,12 @@ export async function retry<A>(
   throw lastError;
 }
 
-export function isTimeOutError(error: Error): boolean {
-  return error instanceof Error && error.message.includes("timeout");
+export function getFactoryContractAddress(
+  chainId: number,
+  network: string,
+  factoryName: string
+): string {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return deployments[chainId][network].contracts[factoryName].address;
 }

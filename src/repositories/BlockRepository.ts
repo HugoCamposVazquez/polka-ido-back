@@ -6,8 +6,8 @@ import { Block } from "../entities";
 type BlockIndex = {
   blockHash: string;
   chainId: number;
-  blockTime: Date;
   blockNumber: number;
+  error?: string;
 };
 
 @EntityRepository(Block)
@@ -33,6 +33,6 @@ export class BlockRepository extends Repository<Block> {
     return await this.manager
       .createQueryBuilder<Block>(Block, "block")
       .select("MAX(block.blockNumber)", "blockNumber")
-      .execute();
+      .getRawOne();
   }
 }
