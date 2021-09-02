@@ -22,10 +22,10 @@ interface Iinstance {
 }
 export class Indexer {
   // eslint-disable-next-line
-  public readonly instance: Iinstance;
+  public readonly instance: Partial<Iinstance>;
   private stopped = false;
   constructor() {
-    this.instance = {} as Iinstance;
+    this.instance = {};
   }
   public async init(): Promise<void> {
     this.instance.config = envSchema<Env>(blockIndexerConfig);
