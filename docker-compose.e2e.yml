@@ -1,6 +1,6 @@
 version: "3.4"
 services:
-  block-indexer:
+  backend:
     build:
       context: .
       target: dev
