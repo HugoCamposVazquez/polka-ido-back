@@ -173,22 +173,24 @@ export class BlockIndexer {
   };
 
   private async handleBlock(blockNumber: number): Promise<void> {
-    logger.info(`Started processing block number ${blockNumber}`);
-    const logs = await retry(async () => {
-      return await this.provider.getLogs({
-        fromBlock: blockNumber,
-        toBlock: blockNumber,
+    if (this.fetchNewBlocks) {
+      logger.info(`Started processing block number ${blockNumber}`);
+      const logs = await retry(async () => {
+        return await this.provider.getLogs({
+          fromBlock: blockNumber,
+          toBlock: blockNumber,
+        });
       });
-    });
-    if (logs.length) {
-      await this.blockRepository.insertBlock({
-        blockHash: logs[0].blockHash,
-        chainId: this.config.CHAIN_ID,
-        blockNumber: logs[0].blockNumber,
-      });
+      if (logs.length) {
+        await this.blockRepository.insertBlock({
+          blockHash: logs[0].blockHash,
+          chainId: this.config.CHAIN_ID,
+          blockNumber: logs[0].blockNumber,
+        });
+      }
+      await this.handleLogs(logs);
+      logger.info(`Block number ${blockNumber} has been processed`);
     }
-    await this.handleLogs(logs);
-    logger.info(`Block number ${blockNumber} has been processed`);
   }
 
   private getHeadBlock = async (): Promise<number> => {

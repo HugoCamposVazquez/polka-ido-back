@@ -19,6 +19,7 @@ interface Iinstance {
 export class Indexer {
   // eslint-disable-next-line
   public readonly instance: Iinstance;
+  private stopped = false;
   constructor() {
     this.instance = {} as Iinstance;
   }
@@ -62,25 +63,28 @@ export class Indexer {
   }
 
   public async stop(): Promise<void> {
-    try {
-      this.instance.blockIndexer?.stop();
-    } catch (e) {
-      logger.error(`Error occurred during indexer stoppage: ${e.message}`);
-    }
+    if (!this.stopped) {
+      try {
+        this.instance.blockIndexer?.stop();
+      } catch (e) {
+        logger.error(`Error occurred during indexer stoppage: ${e.message}`);
+      }
 
-    try {
-      await this.instance.db?.close();
-    } catch (error) {
-      logger.error(
-        `Error occurred during database closing because: ${error.message}`
-      );
-    }
-    try {
-      await this.instance.mintQueue?.close();
-    } catch (error) {
-      logger.error(
-        `Error occurred during redis closing because: ${error.message}`
-      );
+      try {
+        await this.instance.db?.close();
+      } catch (error) {
+        logger.error(
+          `Error occurred during database closing because: ${error.message}`
+        );
+      }
+      try {
+        await this.instance.mintQueue?.close();
+      } catch (error) {
+        logger.error(
+          `Error occurred during redis closing because: ${error.message}`
+        );
+      }
+      this.stopped = true;
     }
   }
 
