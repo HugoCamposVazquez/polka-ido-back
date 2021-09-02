@@ -9,6 +9,7 @@ services:
     container_name: "${BACKEND_CONTAINER_NAME:-nodejs-backend}"
     depends_on:
       - db
+      - redis
     volumes:
           - .:/usr/app
           - node_modules:/usr/app/node_modules
