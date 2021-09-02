@@ -30,6 +30,7 @@ describe("Block-indexer e2e test", async function () {
   before(async function () {
     config = envSchema<Env>(blockIndexerConfig);
     db = await getDatabaseConnection();
+    await db.runMigrations({ transaction: "all" });
 
     mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
       redis: {
