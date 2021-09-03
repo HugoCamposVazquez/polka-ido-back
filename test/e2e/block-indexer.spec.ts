@@ -138,14 +138,7 @@ describe("Block-indexer e2e test", async function () {
     // process blocks for 2sec
     let jobs: Job[] = await new Promise((resolve) =>
       emiter.on("processingBlocksDone", async () => {
-        const jobs = await mintQueue.getJobs([
-          "completed",
-          "waiting",
-          "active",
-          "delayed",
-          "failed",
-          "paused",
-        ]);
+        const jobs = await mintQueue.getJobs(["waiting"]);
         resolve(jobs);
       })
     );
