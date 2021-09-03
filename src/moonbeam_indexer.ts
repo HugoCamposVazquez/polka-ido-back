@@ -1,4 +1,4 @@
-import Bull, { Queue } from "bull";
+import { Queue } from "bullmq";
 import envSchema from "env-schema";
 import { ethers } from "ethers";
 import { Connection } from "typeorm";
@@ -21,8 +21,8 @@ export class Indexer {
     this.instance.db = await getDatabaseConnection();
     await this.instance.db.runMigrations({ transaction: "all" });
 
-    this.instance.mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
-      redis: {
+    this.instance.mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
+      connection: {
         host: this.instance.config.REDIS_HOST,
         port: this.instance.config.REDIS_PORT,
       },
