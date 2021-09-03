@@ -116,11 +116,11 @@ export class BlockIndexer {
 
         if (parsedLog.name === "Claim") {
           const data = {
-            substrateAdd: parsedLog.args?.substrateAddress,
+            walletAddress: parsedLog.args?.token.walletAddress,
+            receiver: parsedLog.args?.substrateAddress,
             amount: parsedLog.args?.amount.toNumber(),
-            token: parsedLog.args?.token,
-            txHash: log.transactionHash,
-            blockNumber: log.blockNumber,
+            claimTxHash: log.transactionHash,
+            saleContractId: parsedLog.args?.token.tokenID,
           };
           await this.mintQueue.add(QueueType.CLAIM_EXECUTOR, data);
         }
