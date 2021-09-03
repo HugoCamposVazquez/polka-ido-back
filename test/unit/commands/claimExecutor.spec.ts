@@ -3,7 +3,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 import { SinonStubbedInstance } from "sinon";
 
-import { executeClaim } from "../../../src/commands/claimExecutor/executor";
+import { executeClaim } from "../../../src/commands/claimExecutor";
 import { ClaimStatus } from "../../../src/entities";
 import { ClaimRepository } from "../../../src/repositories/ClaimRepository";
 import { logger } from "../../../src/services/logger";
