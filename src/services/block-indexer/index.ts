@@ -155,7 +155,7 @@ export class BlockIndexer {
           };
 
           await this.saleContractRepository.insertSaleContract(saleContract);
-          this.saleContractAddresses.push(parsedLog.args?.tokenSaleAddress);
+          this.saleContractAddresses.push(parsedLog.args?.tokenSaleAddress.toLowerCase());
         }
       }
     }
