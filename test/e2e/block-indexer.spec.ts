@@ -1,5 +1,3 @@
-import EventEmitter from "events";
-
 import Bull, { Job, Queue } from "bull";
 import { expect } from "chai";
 import envSchema from "env-schema";
@@ -25,7 +23,6 @@ describe("Block-indexer e2e test", async function () {
   let config: Env;
   let blockIndexer: BlockIndexer;
   let db: Connection;
-  let emiter: EventEmitter;
 
   before(async function () {
     config = envSchema<Env>(blockIndexerConfig);
@@ -38,7 +35,6 @@ describe("Block-indexer e2e test", async function () {
         port: config.REDIS_PORT,
       },
     });
-    emiter = new EventEmitter();
     saleContractRepo = db.getCustomRepository(SaleContractRepository);
     // get saleContract addresses
     const saleContractAddresses = await saleContractRepo.getAllAddresses();
@@ -90,14 +86,14 @@ describe("Block-indexer e2e test", async function () {
   it("should process SaleCreated", async function () {
     const fromBlock = 664365;
     const toBlock = 664367;
-    blockIndexer.start(emiter, fromBlock, toBlock);
+    blockIndexer.start(fromBlock, toBlock);
     // after 2 seconds of processing blocks return saleContracts and blocks that are processed
     const {
       saleContracts,
       blocks,
     }: { saleContracts: string[]; blocks: Block[] } = await new Promise(
       (resolve) =>
-        emiter.on("processingBlocksDone", async () => {
+        blockIndexer.emiter.on("processingBlocksDone", async () => {
           const saleContracts = await saleContractRepo.getAllAddresses();
           const blocks = await blockRepo.find();
           resolve({ saleContracts, blocks });
@@ -134,10 +130,9 @@ describe("Block-indexer e2e test", async function () {
     const fromBlock = 664443;
     const toBlock = 664444;
 
-    blockIndexer.start(emiter, fromBlock, toBlock);
-    // process blocks for 2sec
+    blockIndexer.start(fromBlock, toBlock);
     let jobs: Job[] = await new Promise((resolve) =>
-      emiter.on("processingBlocksDone", async () => {
+      blockIndexer.emiter.on("processingBlocksDone", async () => {
         const jobs = await mintQueue.getJobs(["waiting"]);
         resolve(jobs);
       })

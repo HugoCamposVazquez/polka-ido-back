@@ -23,9 +23,10 @@ export interface Iconfig {
   REORG_PROTECTION_COUNT: number;
 }
 
-export class BlockIndexer {
+export class BlockIndexer extends EventEmitter {
   private blockRepository: BlockRepository;
   public config: Iconfig;
+  public emiter: EventEmitter;
   private provider!: ethers.providers.BaseProvider;
   private saleContractAddresses: string[];
   private saleContractRepository;
@@ -40,6 +41,7 @@ export class BlockIndexer {
     saleContractRepository: SaleContractRepository,
     mintQueue: Queue
   ) {
+    super();
     this.config = config;
     this.blockRepository = blockRepository;
     this.saleContractAddresses = saleContractAddresses;
@@ -47,6 +49,7 @@ export class BlockIndexer {
     this.tokenSaleIface = new ethers.utils.Interface(TokenSaleContract.abi);
     this.factoryIface = new ethers.utils.Interface(SwapFactoryContract.abi);
     this.mintQueue = mintQueue;
+    this.emiter = new EventEmitter();
     try {
       this.provider = new ethers.providers.JsonRpcProvider(
         this.config.NETWORK_URL,
@@ -58,15 +61,11 @@ export class BlockIndexer {
     }
   }
 
-  public async start(
-    emiter: EventEmitter,
-    fromBlock?: number,
-    toBlock?: number
-  ): Promise<void> {
+  public async start(fromBlock?: number, toBlock?: number): Promise<void> {
     this.fetchNewBlocks = true;
     // process all unhandled blocks
     await this.processBlocks(fromBlock, toBlock);
-    emiter.emit("processingBlocksDone");
+    this.emiter.emit("processingBlocksDone");
     if (this.fetchNewBlocks) {
       this.provider.on("block", this.blockEventListener);
     }
@@ -75,7 +74,6 @@ export class BlockIndexer {
   public stop(): void {
     logger.info("Stop listening to all events");
     this.fetchNewBlocks = false;
-    // unsubscribe only if already subscribed
     this.provider.off("block", this.blockEventListener);
   }
 
@@ -84,7 +82,6 @@ export class BlockIndexer {
     toBlock?: number
   ): Promise<void> {
     // fetch the latest block from database
-
     if (!fromBlock) {
       const latestBlock = await this.blockRepository.getLatestBlock();
 
@@ -155,7 +152,9 @@ export class BlockIndexer {
           };
 
           await this.saleContractRepository.insertSaleContract(saleContract);
-          this.saleContractAddresses.push(parsedLog.args?.tokenSaleAddress.toLowerCase());
+          this.saleContractAddresses.push(
+            parsedLog.args?.tokenSaleAddress.toLowerCase()
+          );
         }
       }
     }

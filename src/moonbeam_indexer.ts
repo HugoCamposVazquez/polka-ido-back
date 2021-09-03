@@ -1,7 +1,6 @@
-import EventEmitter from "events";
-
 import Bull, { Queue } from "bull";
 import envSchema from "env-schema";
+import nodeCleanup from "node-cleanup";
 import { Connection } from "typeorm";
 
 import { blockIndexerConfig, Env } from "./config";
@@ -23,7 +22,6 @@ async function main(): Promise<void> {
       port: config.REDIS_PORT,
     },
   });
-  const emiter = new EventEmitter();
   const salecontractRepo = db.getCustomRepository(SaleContractRepository);
   // get saleContract addresses
   const saleContractAddresses = await salecontractRepo.getAllAddresses();
@@ -36,37 +34,18 @@ async function main(): Promise<void> {
     mintQueue
   );
   // process all unhandled blocks
-  await blockIndexer.start(emiter);
+  await blockIndexer.start();
 
-  //do something when app is closing
-  process.on("exit", async function () {
-    await stop(blockIndexer, db, emiter, mintQueue);
-  });
-
-  //catches ctrl+c event
-  process.on("SIGINT", async function () {
-    await stop(blockIndexer, db, emiter, mintQueue);
-  });
-
-  // catches "kill pid" (for example: nodemon restart)
-  process.on("SIGUSR1", async function () {
-    await stop(blockIndexer, db, emiter, mintQueue);
-  });
-
-  process.on("SIGUSR2", async function () {
-    await stop(blockIndexer, db, emiter, mintQueue);
-  });
-
-  //catches uncaught exceptions
-  process.on("uncaughtException", async function () {
-    await stop(blockIndexer, db, emiter, mintQueue);
+  nodeCleanup(function () {
+    stop(blockIndexer, db, mintQueue);
+    nodeCleanup.uninstall();
+    return false;
   });
 }
 
 async function stop(
   blockIndexer?: BlockIndexer,
   db?: Connection,
-  emiter?: EventEmitter,
   mintQueue?: Queue<QueueType>
 ): Promise<void> {
   try {
@@ -75,7 +54,7 @@ async function stop(
     logger.error(`Error occurred during indexer stoppage: ${e.message}`);
   }
 
-  emiter?.on("processingBlocksDone", async () => {
+  blockIndexer?.emiter.on("processingBlocksDone", async () => {
     try {
       await db?.close();
     } catch (error) {
