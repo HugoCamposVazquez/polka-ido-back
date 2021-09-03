@@ -1,35 +1,82 @@
-import { Worker } from "bullmq";
-import { getConnection } from "typeorm";
+import { BN } from "@polkadot/util";
+import { Job, Processor } from "bullmq";
 
+import { ClaimStatus } from "../../entities";
 import { ClaimRepository } from "../../repositories/ClaimRepository";
 import { logger } from "../../services/logger";
-import { QueueType } from "../../services/queue";
+import { ClaimData } from "../../services/queue";
 import { StatemintWallet } from "../../services/statemint";
 
-import { executeClaim } from "./executor";
+export function executeClaim(
+  wallet: StatemintWallet,
+  claimRepository: ClaimRepository
+): Processor<ClaimData> {
+  return async (job: Job<ClaimData>): Promise<void> => {
+    logger.info(
+      {
+        claim: job.data,
+      },
+      "Executing claim"
+    );
 
-async function initClaimExecutor(): Promise<void> {
-  const wallet = new StatemintWallet(process.env.STATEMINT_MNEMONIC as string);
-  await wallet.initWallet(process.env.STATEMINT_URL as string);
+    try {
+      await claimRepository.createClaim({
+        status: ClaimStatus.SUCCESSFUL,
+        claimTxHash: job.data.claimTxHash,
+        saleContractId: job.data.saleContractId,
+        amount: job.data.amount,
+        receiver: job.data.receiver,
+      });
 
-  const db = getConnection();
-  const claimRepository = db.getCustomRepository(ClaimRepository);
+      logger.info(
+        {
+          id: job.id,
+          data: job.data,
+        },
+        `Successfully created claim`
+      );
+    } catch (error) {
+      logger.error(
+        {
+          stack: error.stack,
+          id: job.id,
+          data: job.data,
+        },
+        "Failed inserting claim"
+      );
 
-  new Worker(QueueType.CLAIM_EXECUTOR, executeClaim(wallet, claimRepository), {
-    concurrency: 1,
-    connection: {
-      host: process.env.REDIS_HOST,
-      port: parseInt(process.env.REDIS_PORT as string),
-    },
-  });
+      return;
+    }
+
+    try {
+      await wallet.transferFrom(
+        job.data.saleContractId,
+        job.data.walletAddress,
+        job.data.receiver,
+        new BN(job.data.amount),
+        job.data.claimTxHash
+      );
+
+      logger.info(
+        {
+          id: job.id,
+          data: job.data,
+        },
+        `Successfully transfered claim`
+      );
+    } catch (error) {
+      await claimRepository.updateClaimStatus(
+        job.data.claimTxHash,
+        ClaimStatus.FAILED
+      );
+      logger.error(
+        {
+          stack: error.stack,
+          id: job.id,
+          data: job.data,
+        },
+        "Failed tranfering claim"
+      );
+    }
+  };
 }
-
-initClaimExecutor()
-  .then(() => {
-    logger.info("Started worker for executing claims.");
-  })
-  .catch((error) => {
-    logger.error("Failed starting worker for executing claims.", {
-      reason: error,
-    });
-  });
