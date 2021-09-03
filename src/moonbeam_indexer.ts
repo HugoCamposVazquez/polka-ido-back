@@ -1,4 +1,4 @@
-import Bull, { Queue } from "bull";
+import { Queue } from "bullmq";
 import envSchema from "env-schema";
 import { ethers } from "ethers";
 import { Connection } from "typeorm";
@@ -9,6 +9,7 @@ import { SaleContractRepository } from "./repositories/SaleContractRepository";
 import { BlockIndexer } from "./services/block-indexer";
 import { getDatabaseConnection } from "./services/db";
 import { logger } from "./services/logger";
+import { QueueType } from "./services/queue";
 export class Indexer {
   // eslint-disable-next-line
   public readonly instance: any;
@@ -20,8 +21,8 @@ export class Indexer {
     this.instance.db = await getDatabaseConnection();
     await this.instance.db.runMigrations({ transaction: "all" });
 
-    this.instance.mintQueue = new Bull("mint", {
-      redis: {
+    this.instance.mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
+      connection: {
         host: this.instance.config.REDIS_HOST,
         port: this.instance.config.REDIS_PORT,
       },

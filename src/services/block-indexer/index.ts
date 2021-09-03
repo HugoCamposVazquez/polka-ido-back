@@ -1,12 +1,13 @@
 import { Log } from "@ethersproject/abstract-provider";
 import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContract.sol/SaleContract.json";
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
-import { Queue } from "bull";
+import { Queue } from "bullmq";
 import { ethers } from "ethers";
 
 import { BlockRepository } from "../../repositories/BlockRepository";
 import { SaleContractRepository } from "../../repositories/SaleContractRepository";
 import { logger } from "../logger";
+import { QueueType } from "../queue";
 import { getFactoryContractAddress, retry } from "../utils";
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface Iconfig {
@@ -115,13 +116,13 @@ export class BlockIndexer {
 
         if (parsedLog.name === "Claim") {
           const data = {
-            substrateAdd: parsedLog.args?.substrateAddress,
+            walletAddress: parsedLog.args?.token.walletAddress,
+            receiver: parsedLog.args?.substrateAddress,
             amount: parsedLog.args?.amount.toNumber(),
-            token: parsedLog.args?.token,
-            txHash: log.transactionHash,
-            blockNumber: log.blockNumber,
+            claimTxHash: log.transactionHash,
+            saleContractId: parsedLog.args?.token.tokenID,
           };
-          await this.mintQueue.add(data);
+          await this.mintQueue.add(QueueType.CLAIM_EXECUTOR, data);
         }
         // if the log comes from factoryContract check if the log contains CreatedSaleContract event
       } else if (
@@ -139,6 +140,7 @@ export class BlockIndexer {
           const saleContract = {
             id: `${this.config.CHAIN_ID}_${parsedLog.args?.tokenSaleAddress}`,
             address: parsedLog.args?.tokenSaleAddress,
+            walletAddress: parsedLog.args.token.walletAddress,
             chainId: this.config.CHAIN_ID,
             blockHash: log.blockHash,
           };
