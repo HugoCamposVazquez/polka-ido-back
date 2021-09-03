@@ -9,3 +9,4 @@ temp/
 dist
 .nyc_output
 coverage
+dump.rdb

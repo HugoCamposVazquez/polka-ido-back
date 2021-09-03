@@ -14,8 +14,22 @@ services:
       - .:/usr/app
       - node_modules:/usr/app/node_modules
     ports:
-      - "${BACKEND_LOCAL_PORT:-3000}:${SERVER_PORT:-3000}"
-      - "${DEBUG_PORT:-56745}:56745"
+          - "${DEBUG_PORT:-56745}:56745"
+  claim_executor:
+    build:
+      context: .
+      target: dev
+    command: sh -c "yarn run nodemon claim_executor.js"
+    image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
+    container_name: "${CLAIM_EXECUTOR_CONTAINER_NAME:-ryu-minter}"
+    depends_on:
+      - db
+      - redis
+    volumes:
+          - .:/usr/app
+          - node_modules:/usr/app/node_modules
+    ports:
+          - "${MINTER_DEBUG_PORT:-56746}:56745"
   db:
     image: postgres:12-alpine
     volumes:
@@ -26,14 +40,16 @@ services:
       - POSTGRES_PASSWORD=${TYPEORM_PASSWORD:-nodefactory}
       - POSTGRES_DB=${TYPEORM_DATABASE:-nodefactory}
     ports:
-      - ${DB_LOCAL_PORT:-9999}:5432
+    - ${DB_LOCAL_PORT:-9999}:5432
+
   redis:
-    image: "redis:alpine"
-    container_name: "${REDIS_CONTAINER_NAME:-nodejs-db}"
+    image: redis:alpine
+    container_name: ryu-redis
     command: redis-server
     ports:
       - ${REDIS_PORT:-6379}:6379
-      
+    restart: on-failure
+
 volumes:
   node_modules:
   postgres:

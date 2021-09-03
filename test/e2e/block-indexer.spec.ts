@@ -1,4 +1,4 @@
-import Bull, { Job, Queue } from "bull";
+import { Job, Queue } from "bullmq";
 import { expect } from "chai";
 import envSchema from "env-schema";
 import sinon from "sinon";
@@ -29,8 +29,8 @@ describe("Block-indexer e2e test", async function () {
     db = await getDatabaseConnection();
     await db.runMigrations({ transaction: "all" });
 
-    mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
-      redis: {
+    mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
+      connection: {
         host: config.REDIS_HOST,
         port: config.REDIS_PORT,
       },
@@ -72,12 +72,14 @@ describe("Block-indexer e2e test", async function () {
   });
 
   beforeEach(async function () {
+    logger.level = "silent";
     sinon.stub(utils, "getFactoryContractAddress").callsFake(() => {
       return factoryContractAddress;
     });
   });
 
   afterEach(async function () {
+    logger.level = "info";
     // stop processing blocks and unsubscribe
     await blockIndexer.stop();
     sinon.restore();
@@ -142,18 +144,18 @@ describe("Block-indexer e2e test", async function () {
     expect(jobs.length).to.be.equal(2);
     expect(jobs).to.be.deep.equal([
       {
+        walletAddress: "walletadd",
         amount: 10,
-        token: [1, 5, "walletadd"],
-        txHash:
+        claimTxHash:
           "0x333f0d58cd16cd573d04b1770e3db26e79e6a0319a78e046a5a3fccdea37ce23",
-        blockNumber: 664444,
+        saleContractId: 1,
       },
       {
+        walletAddress: "walletadd",
         amount: 10000,
-        token: [1, 5, "walletadd"],
-        txHash:
+        claimTxHash:
           "0x912259099f1495fa5385f72d799c543ae7b114ca605bb24618b024909da52327",
-        blockNumber: 664443,
+        saleContractId: 1,
       },
     ]);
   });

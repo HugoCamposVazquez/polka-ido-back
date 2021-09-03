@@ -36,14 +36,14 @@
     "typeorm-ts": "ts-node ./node_modules/typeorm/cli.js",
     "seeder": "ts-node ./node_modules/typeorm-seeding/dist/cli.js",
     "start:server": "node --inspect=0.0.0.0:56745 -r ts-node/register -r dotenv/config src/index.ts",
-    "start:api": "node --inspect=0.0.0.0:56745 -r ts-node/register -r dotenv/config src/index.ts",
     "nodemon": "cross-env NODE_ENV=development ./node_modules/nodemon/bin/nodemon.js"
   },
   "dependencies": {
     "@nodefactoryio/ryu-contracts": "0.4.0",
     "@polkadot/api": "^4.17.1",
     "@substrate/txwrapper-polkadot": "^1.2.5",
-    "bull": "^3.22.9",
+    "@types/bull": "^3.15.3",
+    "bullmq": "^1.40.4",
     "env-schema": "^3.3.0",
     "ethers": "^5.3.1",
     "fastify": "^3.17.0",

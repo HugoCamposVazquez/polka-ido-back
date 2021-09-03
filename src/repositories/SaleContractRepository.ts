@@ -7,6 +7,8 @@ type SaleContractData = {
   address: string;
   chainId: number;
   blockHash: string;
+  id: string;
+  walletAddress: string;
 };
 @EntityRepository(SaleContract)
 export class SaleContractRepository extends Repository<SaleContract> {

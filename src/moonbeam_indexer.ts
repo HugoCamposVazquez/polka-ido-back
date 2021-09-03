@@ -1,4 +1,4 @@
-import Bull, { Queue } from "bull";
+import { Queue } from "bullmq";
 import envSchema from "env-schema";
 import nodeCleanup from "node-cleanup";
 import { Connection } from "typeorm";
@@ -16,8 +16,8 @@ async function main(): Promise<void> {
   const db = await getDatabaseConnection();
   await db.runMigrations({ transaction: "all" });
 
-  const mintQueue = new Bull(QueueType.CLAIM_EXECUTOR, {
-    redis: {
+  const mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
+    connection: {
       host: config.REDIS_HOST,
       port: config.REDIS_PORT,
     },
