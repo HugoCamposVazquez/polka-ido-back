@@ -63,6 +63,7 @@ export class BlockIndexer {
     fromBlock?: number,
     toBlock?: number
   ): Promise<void> {
+    this.fetchNewBlocks = true;
     // process all unhandled blocks
     await this.processBlocks(fromBlock, toBlock);
     emiter.emit("processingBlocksDone");
