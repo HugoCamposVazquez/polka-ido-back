@@ -3,6 +3,7 @@ import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
 import { Queue } from "bullmq";
 import { ethers } from "ethers";
+
 import { BlockRepository } from "../../repositories/BlockRepository";
 import { SaleContractRepository } from "../../repositories/SaleContractRepository";
 import { logger } from "../logger";
