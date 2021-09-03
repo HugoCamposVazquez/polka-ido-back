@@ -30,7 +30,7 @@ services:
           - node_modules:/usr/app/node_modules
     ports:
           - "${BACKEND_LOCAL_PORT:-3000}:${SERVER_PORT:-3000}"
-          - "${DEBUG_PORT:-56745}:56745"
+          - "${MINTER_DEBUG_PORT:-56746}:56745"
   db:
     image: postgres:12-alpine
     volumes:
