@@ -611,7 +611,7 @@
   resolved "https://registry.npmjs.org/@istanbuljs/schema/-/schema-0.1.3.tgz#e45e384e4b8ec16bce2fd903af78450f6bf7ec98"
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
-"@nodefactoryio/ryu-contracts@^0.4.0":
+"@nodefactoryio/ryu-contracts@0.4.0":
   version "0.4.0"
   resolved "https://npm.pkg.github.com/download/@nodefactoryio/ryu-contracts/0.4.0/7ec990aa2c650df18d912e405243149d093ab789528ffdfd01df633319a3dd34#7322cb60298edada62685c8f1275b1e296a8ab1a"
   integrity sha512-VvBPgRPn64/UEbmtLSBjAMKzfZ39KTJ/iCvfkavKBEtfcvaxIaWK9maeLSxItZVg/BYP9mGkYQQwNACyLQmjMA==
