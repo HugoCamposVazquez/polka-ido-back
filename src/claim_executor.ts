@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
-import { Connection, getConnection } from "typeorm";
 import nodeCleanup from "node-cleanup";
+import { Connection, getConnection } from "typeorm";
 
 import { executeClaim } from "./commands/claimExecutor";
 import { ClaimRepository } from "./repositories/ClaimRepository";
@@ -27,7 +27,7 @@ async function initClaimExecutor(): Promise<void> {
     }
   );
 
-  nodeCleanup(function (exitCode, signal) {
+  nodeCleanup(function () {
     stop(db, worker);
     nodeCleanup.uninstall();
     return false;
