@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import { Connection, getConnection } from "typeorm";
+import nodeCleanup from "node-cleanup";
 
 import { executeClaim } from "./commands/claimExecutor";
 import { ClaimRepository } from "./repositories/ClaimRepository";
@@ -26,23 +27,10 @@ async function initClaimExecutor(): Promise<void> {
     }
   );
 
-  //catches ctrl+c event
-  process.on("SIGINT", async () => {
-    await stop(db, worker);
-  });
-
-  process.on("SIGTERM", async () => {
-    await stop(db, worker);
-  });
-
-  // catches "kill pid" (for example: nodemon restart)
-  process.on("SIGUSR1", async () => {
-    await stop(db, worker);
-  });
-
-  //catches uncaught exceptions
-  process.on("uncaughtException", async () => {
-    await stop(db, worker);
+  nodeCleanup(function (exitCode, signal) {
+    stop(db, worker);
+    nodeCleanup.uninstall();
+    return false;
   });
 }
 
