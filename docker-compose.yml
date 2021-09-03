@@ -21,7 +21,7 @@ services:
       target: dev
     command: sh -c "yarn run nodemon claim_executor.js"
     image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
-    container_name: "${CLAIM_EXECUTOR_CONTAINER_NAME:-nodejs-backend}"
+    container_name: "${CLAIM_EXECUTOR_CONTAINER_NAME:-ryu-minter}"
     depends_on:
       - db
       - redis
