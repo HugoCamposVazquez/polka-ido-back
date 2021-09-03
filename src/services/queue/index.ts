@@ -1,7 +1,6 @@
 export enum QueueType {
   CLAIM_EXECUTOR = "claim_executor",
 }
-
 export interface ClaimData {
   walletAddress: string;
   receiver: string;

@@ -4,14 +4,15 @@ services:
     build:
       context: .
       target: dev
-    command: sh -c "yarn run nodemon index.js"
+    command: sh -c "yarn run nodemon moonbeam_indexer.js"
     image: nodefactory/ryu-backend:${IMAGE_TAG:-latest}
     container_name: "${BACKEND_CONTAINER_NAME:-nodejs-backend}"
     depends_on:
       - db
+      - redis
     volumes:
-          - .:/usr/app
-          - node_modules:/usr/app/node_modules
+      - .:/usr/app
+      - node_modules:/usr/app/node_modules
     ports:
           - "${DEBUG_PORT:-56745}:56745"
   claim_executor:
@@ -32,12 +33,12 @@ services:
   db:
     image: postgres:12-alpine
     volumes:
-    - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
     container_name: "${DB_CONTAINER_NAME:-nodejs-db}"
     environment:
-    - POSTGRES_USER=${TYPEORM_USER:-nodefactory}
-    - POSTGRES_PASSWORD=${TYPEORM_PASSWORD:-nodefactory}
-    - POSTGRES_DB=${TYPEORM_DATABASE:-nodefactory}
+      - POSTGRES_USER=${TYPEORM_USER:-nodefactory}
+      - POSTGRES_PASSWORD=${TYPEORM_PASSWORD:-nodefactory}
+      - POSTGRES_DB=${TYPEORM_DATABASE:-nodefactory}
     ports:
     - ${DB_LOCAL_PORT:-9999}:5432
 

@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import envSchema from "env-schema";
-import { ethers } from "ethers";
+import nodeCleanup from "node-cleanup";
 import { Connection } from "typeorm";
 
 import { blockIndexerConfig, Env } from "./config";
@@ -10,87 +10,68 @@ import { BlockIndexer } from "./services/block-indexer";
 import { getDatabaseConnection } from "./services/db";
 import { logger } from "./services/logger";
 import { QueueType } from "./services/queue";
-export class Indexer {
-  // eslint-disable-next-line
-  public readonly instance: any;
-  constructor() {
-    this.instance = {};
-  }
-  public async init(): Promise<void> {
-    this.instance.config = envSchema<Env>(blockIndexerConfig);
-    this.instance.db = await getDatabaseConnection();
-    await this.instance.db.runMigrations({ transaction: "all" });
 
-    this.instance.mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
-      connection: {
-        host: this.instance.config.REDIS_HOST,
-        port: this.instance.config.REDIS_PORT,
-      },
-    });
+async function main(): Promise<void> {
+  const config = envSchema<Env>(blockIndexerConfig);
+  const db = await getDatabaseConnection();
+  await db.runMigrations({ transaction: "all" });
+
+  const mintQueue = new Queue(QueueType.CLAIM_EXECUTOR, {
+    connection: {
+      host: config.REDIS_HOST,
+      port: config.REDIS_PORT,
+    },
+  });
+  const salecontractRepo = db.getCustomRepository(SaleContractRepository);
+  // get saleContract addresses
+  const saleContractAddresses = await salecontractRepo.getAllAddresses();
+
+  const blockIndexer = new BlockIndexer(
+    config,
+    db.getCustomRepository(BlockRepository),
+    saleContractAddresses,
+    salecontractRepo,
+    mintQueue
+  );
+  // process all unhandled blocks
+  await blockIndexer.start();
+
+  nodeCleanup(function () {
+    stop(blockIndexer, db, mintQueue);
+    nodeCleanup.uninstall();
+    return false;
+  });
+}
+
+async function stop(
+  blockIndexer?: BlockIndexer,
+  db?: Connection,
+  mintQueue?: Queue<QueueType>
+): Promise<void> {
+  try {
+    await blockIndexer?.stop();
+  } catch (e) {
+    logger.error(`Error occurred during indexer stoppage: ${e.message}`);
   }
 
-  public async start(fromBlock?: number, toBlock?: number): Promise<void> {
+  blockIndexer?.emiter.on("processingBlocksDone", async () => {
     try {
-      const salecontractRepo = this.instance.db.getCustomRepository(
-        SaleContractRepository
-      );
-      // get saleContract addresses
-      const saleContractAddresses = await salecontractRepo.getAllAddresses();
-
-      this.instance.blockIndexer = new BlockIndexer(
-        this.instance.config,
-        this.instance.db.getCustomRepository(BlockRepository),
-        saleContractAddresses,
-        salecontractRepo,
-        this.instance.mintQueue
-      );
-
-      // process all unhandled blocks
-      await this.instance.blockIndexer.processPastClaimEvents(
-        fromBlock,
-        toBlock
-      );
-      const provider = new ethers.providers.JsonRpcProvider(
-        this.instance.config.NETWORK_URL,
-        this.instance.config.CHAIN_ID
-      );
-
-      provider.on("block", this.instance.blockIndexer.blockEventListener);
+      await db?.close();
     } catch (error) {
       logger.error(
-        `Error occurred during app startup because of: ${error.stack}`
+        `Error occurred during database closing because: ${error.message}`
       );
-      this.stop(undefined);
     }
-  }
-
-  public async stop(signal: string | undefined): Promise<void> {
-    await this.instance.db
-      ?.close()
-      .catch((error: Error) =>
-        logger.error(
-          `Error occurred during database closing because: ${error.message}`
-        )
-      );
     try {
-      await this.instance.blockIndexer?.stop();
-    } catch (e) {
-      logger.error(`Error occurred during indexer stoppage: ${e.message}`);
+      await mintQueue?.close();
+    } catch (error) {
+      logger.error(
+        `Error occurred during redis closing because: ${error.message}`
+      );
     }
-
-    if (signal !== "TEST") {
-      process.kill(process.pid, signal);
-    }
-  }
-
-  // mostly for testing purposes
-  get instanceHandlers(): {
-    db: Connection;
-    blockIndexer: BlockIndexer;
-    // eslint-disable-next-line
-    mintQueue: Queue<any>;
-    config: Env;
-  } {
-    return this.instance;
-  }
+  });
 }
+
+main().then(() => {
+  logger.info("Block indexer started");
+});

@@ -1,3 +1,5 @@
+import EventEmitter from "events";
+
 import { Log } from "@ethersproject/abstract-provider";
 import TokenSaleContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContract.sol/SaleContract.json";
 import SwapFactoryContract from "@nodefactoryio/ryu-contracts/artifacts/contracts/SaleContractFactory.sol/SaleContractFactory.json";
@@ -22,9 +24,10 @@ export interface Iconfig {
   REORG_PROTECTION_COUNT: number;
 }
 
-export class BlockIndexer {
+export class BlockIndexer extends EventEmitter {
   private blockRepository: BlockRepository;
   public config: Iconfig;
+  public emiter: EventEmitter;
   private provider!: ethers.providers.BaseProvider;
   private saleContractAddresses: string[];
   private saleContractRepository;
@@ -39,6 +42,7 @@ export class BlockIndexer {
     saleContractRepository: SaleContractRepository,
     mintQueue: Queue
   ) {
+    super();
     this.config = config;
     this.blockRepository = blockRepository;
     this.saleContractAddresses = saleContractAddresses;
@@ -46,6 +50,7 @@ export class BlockIndexer {
     this.tokenSaleIface = new ethers.utils.Interface(TokenSaleContract.abi);
     this.factoryIface = new ethers.utils.Interface(SwapFactoryContract.abi);
     this.mintQueue = mintQueue;
+    this.emiter = new EventEmitter();
     try {
       this.provider = new ethers.providers.JsonRpcProvider(
         this.config.NETWORK_URL,
@@ -58,23 +63,26 @@ export class BlockIndexer {
   }
 
   public async start(fromBlock?: number, toBlock?: number): Promise<void> {
+    this.fetchNewBlocks = true;
     // process all unhandled blocks
-    await this.processPastClaimEvents(fromBlock, toBlock);
-    this.provider.on("block", this.blockEventListener);
+    await this.processBlocks(fromBlock, toBlock);
+    this.emiter.emit("processingBlocksDone");
+    if (this.fetchNewBlocks) {
+      this.provider.on("block", this.blockEventListener);
+    }
   }
 
   public stop(): void {
     logger.info("Stop listening to all events");
-    this.provider.off("block", this.blockEventListener);
     this.fetchNewBlocks = false;
+    this.provider.off("block", this.blockEventListener);
   }
 
-  public async processPastClaimEvents(
+  public async processBlocks(
     fromBlock?: number,
     toBlock?: number
   ): Promise<void> {
     // fetch the latest block from database
-
     if (!fromBlock) {
       const latestBlock = await this.blockRepository.getLatestBlock();
 
@@ -90,7 +98,7 @@ export class BlockIndexer {
           break;
         }
 
-        this.handleBlock(fromBlock);
+        await this.handleBlock(fromBlock);
         fromBlock++;
       }
     } catch (err) {
@@ -110,7 +118,7 @@ export class BlockIndexer {
     for (const log of logs) {
       logger.trace(log, "Handling the log");
       // if the log comes from the saleContract check if the log contains Claim event
-      if (this.saleContractAddresses.includes(log.address)) {
+      if (this.saleContractAddresses.includes(log.address.toLowerCase())) {
         const parsedLog = await this.tokenSaleIface.parseLog(log);
         logger.info(parsedLog, "Handling saleContract event");
 
@@ -146,7 +154,9 @@ export class BlockIndexer {
           };
 
           await this.saleContractRepository.insertSaleContract(saleContract);
-          this.saleContractAddresses.push(parsedLog.args?.tokenSaleAddress);
+          this.saleContractAddresses.push(
+            parsedLog.args?.tokenSaleAddress.toLowerCase()
+          );
         }
       }
     }
@@ -169,22 +179,24 @@ export class BlockIndexer {
   };
 
   private async handleBlock(blockNumber: number): Promise<void> {
-    logger.info(`Started processing block number ${blockNumber}`);
-    const logs = await retry(async () => {
-      return await this.provider.getLogs({
-        fromBlock: blockNumber,
-        toBlock: blockNumber,
+    if (this.fetchNewBlocks) {
+      logger.info(`Started processing block number ${blockNumber}`);
+      const logs = await retry(async () => {
+        return await this.provider.getLogs({
+          fromBlock: blockNumber,
+          toBlock: blockNumber,
+        });
       });
-    });
-    if (logs.length) {
-      await this.blockRepository.insertBlock({
-        blockHash: logs[0].blockHash,
-        chainId: this.config.CHAIN_ID,
-        blockNumber: logs[0].blockNumber,
-      });
+      if (logs.length) {
+        await this.blockRepository.insertBlock({
+          blockHash: logs[0].blockHash,
+          chainId: this.config.CHAIN_ID,
+          blockNumber: logs[0].blockNumber,
+        });
+      }
+      await this.handleLogs(logs);
+      logger.info(`Block number ${blockNumber} has been processed`);
     }
-    await this.handleLogs(logs);
-    logger.info(`Block number ${blockNumber} has been processed`);
   }
 
   private getHeadBlock = async (): Promise<number> => {
