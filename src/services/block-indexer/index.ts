@@ -139,6 +139,7 @@ export class BlockIndexer {
           const saleContract = {
             id: `${this.config.CHAIN_ID}_${parsedLog.args?.tokenSaleAddress}`,
             address: parsedLog.args?.tokenSaleAddress,
+            walletAddress: parsedLog.args.token.walletAddress,
             chainId: this.config.CHAIN_ID,
             blockHash: log.blockHash,
           };

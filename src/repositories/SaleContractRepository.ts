@@ -7,7 +7,7 @@ type SaleContractData = {
   address: string;
   chainId: number;
   blockHash: string;
-  id: number;
+  id: string;
   walletAddress: string;
 };
 @EntityRepository(SaleContract)
