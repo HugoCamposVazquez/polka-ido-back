@@ -73,8 +73,14 @@ export function getFactoryContractAddress(
   chainId: number,
   network: string,
   factoryName: string
-): string {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  return deployments[chainId][network].contracts[factoryName].address;
+): string | null {
+  const factoryContractAddress =
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    deployments[chainId]?.[network]?.contracts[factoryName]?.address;
+  if (!factoryContractAddress) {
+    return null;
+  }
+
+  return factoryContractAddress;
 }

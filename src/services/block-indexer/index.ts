@@ -35,7 +35,7 @@ export class BlockIndexer extends EventEmitter {
   private tokenSaleIface: ethers.utils.Interface;
   private factoryIface: ethers.utils.Interface;
   private fetchNewBlocks = true;
-  private factoryContractAddress: string;
+  private factoryContractAddress: string | null;
   constructor(
     config: Iconfig,
     blockRepository: BlockRepository,
@@ -52,15 +52,15 @@ export class BlockIndexer extends EventEmitter {
     this.factoryIface = new ethers.utils.Interface(SwapFactoryContract.abi);
     this.mintQueue = mintQueue;
     this.emiter = new EventEmitter();
-    try {
-      this.factoryContractAddress = getFactoryContractAddress(
-        this.config.CHAIN_ID,
-        this.config.NETWORK,
-        this.config.FACTORY_CONTRACT_NAME
+    this.factoryContractAddress = getFactoryContractAddress(
+      this.config.CHAIN_ID,
+      this.config.NETWORK,
+      this.config.FACTORY_CONTRACT_NAME
+    );
+    if (!this.factoryContractAddress) {
+      throw new Error(
+        `Contract with ${this.config.FACTORY_CONTRACT_NAME} name not found in deployments with ${this.config.NETWORK}(${this.config.CHAIN_ID})`
       );
-    } catch (error) {
-      logger.error("Error occured while fetching factory contract address");
-      throw error;
     }
 
     try {

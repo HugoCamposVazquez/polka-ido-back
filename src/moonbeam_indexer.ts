@@ -76,11 +76,12 @@ main()
   .then(() => {
     logger.info("Block indexer started");
   })
-  .catch((error) => {
+  .catch(async (error) => {
     logger.error(
       {
         reason: error.message,
       },
       "Failed starting block-indexer."
     );
+    await stop();
   });
