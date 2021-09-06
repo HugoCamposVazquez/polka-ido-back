@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "minter-ryu-backend"
+  labels:
+    {{- include "helm.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ .Values.minter.name }}
+  selector:
+    matchLabels:
+        app: {{ .Values.minter.name | default "ryu-block-indexer" }}
+        {{- include "helm.selectorLabels" . | nindent 8 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        app: {{ .Values.minter.name | default "ryu-block-indexer" }}
+        {{- include "helm.selectorLabels" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+        - name: {{.Values.github_registry.secret_name}}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.minter.name }}
+          command: ["node"]
+          args: ["claim_executor.js"]
+          securityContext:
+            {{- toYaml .Values.minter.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.app.version | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.minter.resources | nindent 12 }}
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: TYPEORM_CONNECTION
+              value: {{ .Values.db.type }}
+            - name: TYPEORM_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.secretsRef }}
+                  key: "private_host"
+            - name: TYPEORM_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.secretsRef }}
+                  key: "port"
+            - name: TYPEORM_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.secretsRef }}
+                  key: "db_name"
+            - name: TYPEORM_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.secretsRef }}
+                  key: "username"
+            - name: TYPEORM_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.db.secretsRef }}
+                  key: "password"
+            - name: TYPEORM_DRIVER_EXTRA
+              value: "{\"ssl\": {\"rejectUnauthorized\": false} }"
+            - name: TYPEORM_SYNCHRONIZE
+              value: "false"
+            - name: TYPEORM_MIGRATIONS
+              value: "/app/migrations/*.js"
+            - name: TYPEORM_MIGRATIONS_DIR
+              value: "/app/migrations"
+            - name: TYPEORM_ENTITIES
+              value: "/app/entities/*.js"
+            - name: TYPEORM_ENTITIES_DIR
+              value: "/app/entities"
+            - name: TYPEORM_SUBSCRIBERS
+              value: "/app/subscribers/*.js"
+            - name: TYPEORM_SUBSCRIBERS_DIR
+              value: "/app/subscribers"
+            - name: TYPEORM_LOGGING
+              value: "true"
+            - name: TYPEORM_LOGGING
+              value: "true"
+            - name: REDIS_HOST
+              value: {{ .Values.redis.host }}
+            - name: REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            - name: STATEMINT_MNEMONIC
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.name }}
+                  key: "statemint_mnemonic"
+            - name: STATEMINT_URL
+              value: {{ .Values.minter.statemint.url }}

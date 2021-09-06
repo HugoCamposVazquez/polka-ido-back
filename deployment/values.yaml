@@ -1,0 +1,81 @@
+app:
+  name: "ryu-backend"
+
+indexer:
+  nameOverride: "ryu-block-indexer"
+  fullnameOverride: "ryu-block-indexer"
+  moonbeam:
+    url: https://rpc.testnet.moonbeam.network
+    network: "moonbaseAlpha"
+    id: 1287
+    reorgProtectionCount: 6
+    factoryDeploymentBlock: 583930
+    
+  resources:
+    requests:
+      cpu: 150m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+minter:
+  name: "ryu-minter"
+  nameOverride: "ryu-minter"
+  fullnameOverride: "ryu-minter"
+  statemint:
+    url: "wss://westmint-rpc.polkadot.io"
+  resources:
+    requests:
+      cpu: 150m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+github_registry:
+  secret_name: ryu-github-registry-pull-secret
+
+image:
+  repository: ghcr.io/nodefactoryio/ryu-backend
+  pullPolicy: IfNotPresent
+
+imageCredentials:
+  registry: "https://ghcr.io"
+  username: "mpetrunic"
+  password: '${{ secrets.CR_PAT }}'
+
+db:
+  type: "postgres"
+  secretsRef: "ryu-backend-db"
+
+redis:
+  host: "ryu-redis-master.default.svc.cluster.local"
+  port: 6379
+
+secrets:
+  name: "ryu-secret-envs"
+  entries:
+    statemint_mnemonic: '${{ secrets.WESTMINT_MNEMONIC }}'
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/metrics"
+  prometheus.io/port: "8080"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80

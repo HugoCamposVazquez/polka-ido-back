@@ -1,7 +1,7 @@
 {
-  "name": "nodejs-ts-starter",
-  "description": "Starter project for developing with NodeJs (Typescript) as backend server",
+  "name": "ryu-backend",
   "version": "1.0.2",
+  "description": "Ryu backend components",
   "contributors": [
     "Marin Petrunić <marin@nodefactory.io>",
     "Belma Gutlić <belma@nodefactory.io>"

@@ -1,14 +1,13 @@
 ![NodeFactory](banner.png)
 
-# NodeJs Typescript Starter
+# Ryu Backend
 ![CI check](https://github.com/NodeFactoryIo/node-ts-starter-fastify/workflows/CI%20check/badge.svg?branch=master&event=push)
 [![Coverage Status](https://coveralls.io/repos/github/NodeFactoryIo/node-ts-starter-fastify/badge.svg?branch=master)](https://coveralls.io/github/NodeFactoryIo/node-ts-starter-fastify?branch=master)
 [![GitHub license](https://img.shields.io/github/license/NodeFactoryIo/node-ts-starter-fastify.svg)](https://github.com/NodeFactoryIo/node-ts-starter-fastify/blob/master/LICENSE)
 [![Twitter](https://img.shields.io/twitter/url/https/github.com/NodeFactoryIo/node-ts-starter-fastify.svg?style=social)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2FNodeFactoryIo%2Fnode-ts-starter-fastify)
 
 
-Starter repository for developing fast API services with typescript and fastify.
-Docker friendly with default CI configuration.
+Nodejs backend containing block indexer and minter service.
 
 ## Requirements
 
