@@ -1,9 +1,10 @@
 import { Worker } from "bullmq";
 import nodeCleanup from "node-cleanup";
-import { Connection, getConnection } from "typeorm";
+import { Connection } from "typeorm";
 
 import { executeClaim } from "./commands/claimExecutor";
 import { ClaimRepository } from "./repositories/ClaimRepository";
+import { getDatabaseConnection } from "./services/db";
 import { logger } from "./services/logger";
 import { QueueType } from "./services/queue";
 import { StatemintWallet } from "./services/statemint";
@@ -12,7 +13,7 @@ async function initClaimExecutor(): Promise<void> {
   const wallet = new StatemintWallet(process.env.STATEMINT_MNEMONIC as string);
   await wallet.initWallet(process.env.STATEMINT_URL as string);
 
-  const db = getConnection();
+  const db = await getDatabaseConnection();
   const claimRepository = db.getCustomRepository(ClaimRepository);
 
   const worker = new Worker(
