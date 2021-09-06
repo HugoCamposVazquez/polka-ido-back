@@ -58,7 +58,7 @@ initClaimExecutor()
   .catch((error) => {
     logger.error(
       {
-        reason: error.message,
+        reason: error.stack,
       },
       "Failed starting worker for executing claims."
     );
