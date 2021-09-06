@@ -35,6 +35,7 @@ export class BlockIndexer extends EventEmitter {
   private tokenSaleIface: ethers.utils.Interface;
   private factoryIface: ethers.utils.Interface;
   private fetchNewBlocks = true;
+  private factoryContractAddress: string;
   constructor(
     config: Iconfig,
     blockRepository: BlockRepository,
@@ -51,6 +52,17 @@ export class BlockIndexer extends EventEmitter {
     this.factoryIface = new ethers.utils.Interface(SwapFactoryContract.abi);
     this.mintQueue = mintQueue;
     this.emiter = new EventEmitter();
+    try {
+      this.factoryContractAddress = getFactoryContractAddress(
+        this.config.CHAIN_ID,
+        this.config.NETWORK,
+        this.config.FACTORY_CONTRACT_NAME
+      );
+    } catch (error) {
+      logger.error("Error occured while fetching factory contract address");
+      throw error;
+    }
+
     try {
       this.provider = new ethers.providers.JsonRpcProvider(
         this.config.NETWORK_URL,
@@ -133,14 +145,7 @@ export class BlockIndexer extends EventEmitter {
           await this.mintQueue.add(QueueType.CLAIM_EXECUTOR, data);
         }
         // if the log comes from factoryContract check if the log contains CreatedSaleContract event
-      } else if (
-        log.address ===
-        getFactoryContractAddress(
-          this.config.CHAIN_ID,
-          this.config.NETWORK,
-          this.config.FACTORY_CONTRACT_NAME
-        )
-      ) {
+      } else if (log.address === this.factoryContractAddress) {
         const parsedLog = await this.factoryIface.parseLog(log);
         logger.info(parsedLog, "Handling factoryContract event");
 

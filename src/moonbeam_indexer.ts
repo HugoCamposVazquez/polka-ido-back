@@ -72,6 +72,15 @@ async function stop(
   });
 }
 
-main().then(() => {
-  logger.info("Block indexer started");
-});
+main()
+  .then(() => {
+    logger.info("Block indexer started");
+  })
+  .catch((error) => {
+    logger.error(
+      {
+        reason: error.message,
+      },
+      "Failed starting block-indexer."
+    );
+  });
