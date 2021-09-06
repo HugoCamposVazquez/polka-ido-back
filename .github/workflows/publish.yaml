@@ -68,21 +68,21 @@ jobs:
           tags: latest,${{ needs.tag.outputs.tag }}
           push: true
 
-      # - name: Create Deployment
-      #   uses: avakar/create-deployment@v1
-      #   id: deploy
-      #   with:
-      #     ref: 'refs/tags/${{ needs.tag.outputs.tag }}'
-      #     auto_merge: false
-      #     required_contexts: ""
-      #     description: "Deployed version ${{ needs.tag.outputs.tag }} of revuto-backend to staging"
-      #     payload: ${{ toJSON(needs.tag.outputs.tag) }}
-      #     environment: 'staging'
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.DEPLOYMENT_GITHUB_TOKEN }}
+      - name: Create Deployment
+        uses: avakar/create-deployment@v1
+        id: deploy
+        with:
+          ref: 'refs/tags/${{ needs.tag.outputs.tag }}'
+          auto_merge: false
+          required_contexts: ""
+          description: "Deployed version ${{ needs.tag.outputs.tag }} of ryu-backend to staging"
+          payload: ${{ toJSON(needs.tag.outputs.tag) }}
+          environment: 'staging'
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEPLOYMENT_GITHUB_TOKEN }}
 
-      # - name: Get the deplopyment ID
-      #   run: echo "The deployment ID was ${{ steps.deploy.outputs.id }}"
+      - name: Get the deplopyment ID
+        run: echo "The deployment ID was ${{ steps.deploy.outputs.id }}"
 
 
       #in case of failure
