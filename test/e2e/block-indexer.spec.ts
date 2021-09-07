@@ -37,15 +37,7 @@ describe("Block-indexer e2e test", async function () {
     });
     saleContractRepo = db.getCustomRepository(SaleContractRepository);
     // get saleContract addresses
-    const saleContractAddresses = await saleContractRepo.getAllAddresses();
     blockRepo = db.getCustomRepository(BlockRepository);
-    blockIndexer = new BlockIndexer(
-      config,
-      blockRepo,
-      saleContractAddresses,
-      saleContractRepo,
-      mintQueue
-    );
   });
 
   after(async function () {
@@ -88,6 +80,14 @@ describe("Block-indexer e2e test", async function () {
   it("should process SaleCreated", async function () {
     const fromBlock = 664365;
     const toBlock = 664367;
+
+    blockIndexer = new BlockIndexer(
+      config,
+      blockRepo,
+      [],
+      saleContractRepo,
+      mintQueue
+    );
     blockIndexer.start(fromBlock, toBlock);
     // after 2 seconds of processing blocks return saleContracts and blocks that are processed
     const {
@@ -132,6 +132,16 @@ describe("Block-indexer e2e test", async function () {
     const fromBlock = 664443;
     const toBlock = 664444;
 
+    blockIndexer = new BlockIndexer(
+      config,
+      blockRepo,
+      [
+        "0xe9a8c99100931cac666f5cea31c4370f684b9168",
+        "0x56de6eee7421bfe9e5fdd14f385f0e69cc39a9a8",
+      ],
+      saleContractRepo,
+      mintQueue
+    );
     blockIndexer.start(fromBlock, toBlock);
     let jobs: Job[] = await new Promise((resolve) =>
       blockIndexer.emiter.on("processingBlocksDone", async () => {
