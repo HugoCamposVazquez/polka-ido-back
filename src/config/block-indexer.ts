@@ -23,7 +23,7 @@ export const blockIndexerConfig = {
       },
       NETWORK: {
         type: "string",
-        default: "MoonbeamAlpha",
+        default: "moonbaseAlpha",
       },
       CHAIN_ID: {
         type: "number",
