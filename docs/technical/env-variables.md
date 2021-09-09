@@ -1,4 +1,4 @@
-# `Challengly` environment variables
+# `Ryu-backend` environment variables
 
 |        `env` name         |                         Description                                                           |
 |:-------------------------:|:---------------------------------------------------------------------------------------------:|
