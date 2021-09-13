@@ -13,14 +13,11 @@ import { QueueType } from "../queue";
 import { getFactoryContractAddress, retry } from "../utils";
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface Iconfig {
-  REDIS_HOST: string;
-  REDIS_PORT: number;
   FACTORY_DEPLOYMENT_BLOCK: number;
   NETWORK_URL: string;
   NETWORK: string;
   CHAIN_ID: number;
   FACTORY_CONTRACT_NAME: string;
-  TOKEN_SALE_CONTRACT_NAME: string;
   REORG_PROTECTION_COUNT: number;
 }
 
@@ -100,6 +97,8 @@ export class BlockIndexer extends EventEmitter {
 
       fromBlock =
         latestBlock?.blockNumber || this.config.FACTORY_DEPLOYMENT_BLOCK;
+
+      fromBlock++;
     }
 
     try {
@@ -167,7 +166,7 @@ export class BlockIndexer extends EventEmitter {
     }
   }
 
-  public blockEventListener = async (blockNumber: number): Promise<void> => {
+  private blockEventListener = async (blockNumber: number): Promise<void> => {
     logger.info(`New block is mined(${blockNumber})`);
     blockNumber = blockNumber - this.config.REORG_PROTECTION_COUNT;
     try {
@@ -201,6 +200,8 @@ export class BlockIndexer extends EventEmitter {
       }
       await this.handleLogs(logs);
       logger.info(`Block number ${blockNumber} has been processed`);
+    } else {
+      this.emiter.emit("processingBlocksDone");
     }
   }
 
