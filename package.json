@@ -1,6 +1,6 @@
 {
   "name": "ryu-backend",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Ryu backend components",
   "contributors": [
     "Marin Petrunić <marin@nodefactory.io>",
