@@ -18,7 +18,7 @@ export class StatemintWallet {
 
   public async initWallet(
     statemintUrl: string,
-    reconnectMs = 5000 
+    reconnectMs = 5000
   ): Promise<void> {
     const wsProvider = new WsProvider(statemintUrl, reconnectMs);
     await wsProvider.isReady;
