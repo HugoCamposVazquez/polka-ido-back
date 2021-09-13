@@ -11,7 +11,10 @@ import { StatemintWallet } from "./services/statemint";
 
 async function initClaimExecutor(): Promise<void> {
   const wallet = new StatemintWallet(process.env.STATEMINT_MNEMONIC as string);
-  await wallet.initWallet(process.env.STATEMINT_URL as string);
+  await wallet.initWallet(
+    process.env.STATEMINT_URL as string,
+    parseInt(process.env.AUTO_CONNECT_MS as string)
+  );
 
   const db = await getDatabaseConnection();
   const claimRepository = db.getCustomRepository(ClaimRepository);
