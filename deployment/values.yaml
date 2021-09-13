@@ -25,6 +25,7 @@ minter:
   fullnameOverride: "ryu-minter"
   statemint:
     url: "wss://westmint-rpc.polkadot.io"
+    reconnectMs: 5000
   resources:
     requests:
       cpu: 150m
