@@ -16,8 +16,11 @@ export class StatemintWallet {
     this.mnemonic = mnemonic;
   }
 
-  public async initWallet(statemintUrl: string): Promise<void> {
-    const wsProvider = new WsProvider(statemintUrl);
+  public async initWallet(
+    statemintUrl: string,
+    reconnectMs: number
+  ): Promise<void> {
+    const wsProvider = new WsProvider(statemintUrl, reconnectMs);
     await wsProvider.isReady;
     this.api = await ApiPromise.create({ provider: wsProvider });
 
