@@ -96,3 +96,5 @@ spec:
                   key: "statemint_mnemonic"
             - name: STATEMINT_URL
               value: {{ .Values.minter.statemint.url }}
+            - name: AUTO_CONNECT_MS
+              value: {{ .Values.minter.statemint.reconnectMs }}
