@@ -141,7 +141,8 @@ export class BlockIndexer extends EventEmitter {
             receiver: parsedLog.args.statemintReceiver,
             amount: parsedLog.args.amount.toString(),
             claimTxHash: log.transactionHash,
-            saleContractId: parsedLog.args?.token.tokenID,
+            tokenId: parsedLog.args?.token.tokenID,
+            saleContractId: log.address.toLowerCase(),
           };
           await this.mintQueue.add(QueueType.CLAIM_EXECUTOR, data);
         }
@@ -152,7 +153,7 @@ export class BlockIndexer extends EventEmitter {
 
         if (parsedLog.name === "CreatedSaleContract") {
           const saleContract = {
-            id: `${this.config.CHAIN_ID}_${parsedLog.args?.tokenSaleAddress}`,
+            id: parsedLog.args?.tokenSaleAddress,
             address: parsedLog.args?.tokenSaleAddress,
             walletAddress: parsedLog.args.token.walletAddress,
             chainId: this.config.CHAIN_ID,
