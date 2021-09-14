@@ -9,7 +9,7 @@ import { ethers } from "ethers";
 import { BlockRepository } from "../../repositories/BlockRepository";
 import { SaleContractRepository } from "../../repositories/SaleContractRepository";
 import { logger } from "../logger";
-import { QueueType } from "../queue";
+import { ClaimData, QueueType } from "../queue";
 import { getFactoryContractAddress, retry } from "../utils";
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface Iconfig {
@@ -28,11 +28,12 @@ export class BlockIndexer extends EventEmitter {
   private provider!: ethers.providers.BaseProvider;
   private saleContractAddresses: string[];
   private saleContractRepository;
-  public mintQueue: Queue;
+  public mintQueue: Queue<ClaimData>;
   private tokenSaleIface: ethers.utils.Interface;
   private factoryIface: ethers.utils.Interface;
   private fetchNewBlocks = true;
   private factoryContractAddress: string | null;
+
   constructor(
     config: Iconfig,
     blockRepository: BlockRepository,
@@ -137,7 +138,7 @@ export class BlockIndexer extends EventEmitter {
           const data = {
             walletAddress: parsedLog.args?.token.walletAddress,
             receiver: parsedLog.args?.substrateAddress,
-            amount: parsedLog.args?.amount.toNumber(),
+            amount: parsedLog.args?.amount.toString(),
             claimTxHash: log.transactionHash,
             saleContractId: parsedLog.args?.token.tokenID,
           };
