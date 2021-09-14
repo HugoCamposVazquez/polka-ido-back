@@ -11,6 +11,7 @@ import { SaleContractRepository } from "../../repositories/SaleContractRepositor
 import { logger } from "../logger";
 import { ClaimData, QueueType } from "../queue";
 import { getFactoryContractAddress, retry } from "../utils";
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export interface Iconfig {
   FACTORY_DEPLOYMENT_BLOCK: number;
@@ -136,9 +137,9 @@ export class BlockIndexer extends EventEmitter {
 
         if (parsedLog.name === "Claim") {
           const data = {
-            walletAddress: parsedLog.args?.token.walletAddress,
-            receiver: parsedLog.args?.substrateAddress,
-            amount: parsedLog.args?.amount.toString(),
+            walletAddress: parsedLog.args.token.walletAddress,
+            receiver: parsedLog.args.statemintReceiver,
+            amount: parsedLog.args.amount.toString(),
             claimTxHash: log.transactionHash,
             saleContractId: parsedLog.args?.token.tokenID,
           };
