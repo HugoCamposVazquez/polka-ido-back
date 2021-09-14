@@ -154,7 +154,6 @@ export class BlockIndexer extends EventEmitter {
         if (parsedLog.name === "CreatedSaleContract") {
           const saleContract = {
             id: parsedLog.args?.tokenSaleAddress,
-            address: parsedLog.args?.tokenSaleAddress,
             walletAddress: parsedLog.args.token.walletAddress,
             chainId: this.config.CHAIN_ID,
             blockHash: log.blockHash,
