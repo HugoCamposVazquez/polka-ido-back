@@ -8,7 +8,7 @@ export class ClaimRepository extends Repository<Claim> {
     receiver: string;
     amount: string;
     claimTxHash: string;
-    saleContractId: number;
+    saleContractId: string;
     status: ClaimStatus;
   }): Promise<InsertResult> {
     const createdClaim = this.create(claim);

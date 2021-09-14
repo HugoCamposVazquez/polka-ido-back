@@ -6,5 +6,6 @@ export interface ClaimData {
   receiver: string;
   amount: string;
   claimTxHash: string;
-  saleContractId: number;
+  saleContractId: string;
+  tokenId: number;
 }

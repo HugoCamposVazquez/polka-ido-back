@@ -39,9 +39,10 @@ describe("Execute claim function", function () {
     await claimProcessor({
       data: {
         claimTxHash: "hash",
-        saleContractId: 1,
+        saleContractId: "address",
         amount: "1000",
         receiver: "address",
+        tokenId: 103,
       },
     } as Job);
 
@@ -59,9 +60,10 @@ describe("Execute claim function", function () {
     await claimProcessor({
       data: {
         claimTxHash: "hash",
-        saleContractId: 1,
+        saleContractId: "address",
         amount: "1000",
         receiver: "address",
+        tokenId: 103,
       },
     } as Job);
 
@@ -77,9 +79,10 @@ describe("Execute claim function", function () {
     await claimProcessor({
       data: {
         claimTxHash: "hash",
-        saleContractId: 1,
+        saleContractId: "address",
         amount: "1000",
         receiver: "address",
+        tokenId: 103,
       },
     } as Job);
 

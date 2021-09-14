@@ -50,7 +50,7 @@ export function executeClaim(
 
     try {
       await wallet.transferFrom(
-        job.data.saleContractId,
+        job.data.tokenId,
         job.data.walletAddress,
         job.data.receiver,
         new BN(job.data.amount),

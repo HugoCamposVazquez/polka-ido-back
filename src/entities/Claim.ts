@@ -32,5 +32,5 @@ export class Claim {
   public saleContract!: SaleContract;
 
   @Column()
-  public saleContractId!: number;
+  public saleContractId!: string;
 }

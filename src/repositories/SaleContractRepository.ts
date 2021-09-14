@@ -4,7 +4,6 @@ import { EntityRepository, Repository } from "typeorm";
 import { SaleContract } from "../entities";
 
 type SaleContractData = {
-  address: string;
   chainId: number;
   blockHash: string;
   id: string;
@@ -32,10 +31,8 @@ export class SaleContractRepository extends Repository<SaleContract> {
   }
 
   public async getAllAddresses(): Promise<string[]> {
-    const contracts = await this.find({ select: ["address"] });
-    const addresses = contracts.map((contract) =>
-      contract.address.toLowerCase()
-    );
+    const contracts = await this.find({ select: ["id"] });
+    const addresses = contracts.map((contract) => contract.id.toLowerCase());
     return addresses;
   }
 }
