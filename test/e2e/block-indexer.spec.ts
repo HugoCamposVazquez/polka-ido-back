@@ -159,6 +159,7 @@ describe("Block-indexer e2e test", async function () {
         claimTxHash:
           "0x333f0d58cd16cd573d04b1770e3db26e79e6a0319a78e046a5a3fccdea37ce23",
         saleContractId: 1,
+        receiver: "5EcFhFHrL53MQWuJWCKCTGhHBJsWZ7Yn3TXpzCTYj6H4eoCy",
       },
       {
         walletAddress: "walletadd",
@@ -166,6 +167,7 @@ describe("Block-indexer e2e test", async function () {
         claimTxHash:
           "0x912259099f1495fa5385f72d799c543ae7b114ca605bb24618b024909da52327",
         saleContractId: 1,
+        receiver: "5EcFhFHrL53MQWuJWCKCTGhHBJsWZ7Yn3TXpzCTYj6H4eoCy",
       },
     ]);
   });
