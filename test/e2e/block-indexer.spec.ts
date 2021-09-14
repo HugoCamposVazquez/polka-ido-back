@@ -155,14 +155,14 @@ describe("Block-indexer e2e test", async function () {
     expect(jobs).to.be.deep.equal([
       {
         walletAddress: "walletadd",
-        amount: 10,
+        amount: "10",
         claimTxHash:
           "0x333f0d58cd16cd573d04b1770e3db26e79e6a0319a78e046a5a3fccdea37ce23",
         saleContractId: 1,
       },
       {
         walletAddress: "walletadd",
-        amount: 10000,
+        amount: "10000",
         claimTxHash:
           "0x912259099f1495fa5385f72d799c543ae7b114ca605bb24618b024909da52327",
         saleContractId: 1,
