@@ -97,4 +97,4 @@ spec:
             - name: STATEMINT_URL
               value: {{ .Values.minter.statemint.url }}
             - name: AUTO_CONNECT_MS
-              value: {{ .Values.minter.statemint.reconnectMs | qoutee }} 
+              value: {{ .Values.minter.statemint.reconnectMs | quote }} 
