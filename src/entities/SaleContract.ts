@@ -13,9 +13,6 @@ export class SaleContract {
   @Column("varchar")
   public blockHash!: string;
 
-  @Column("varchar")
-  public walletAddress!: string;
-
   @ManyToOne(() => Block, (block) => block.blockHash)
   @JoinColumn({
     name: "blockHash",
