@@ -16,7 +16,7 @@ import * as utils from "../../src/services/utils";
 
 describe("Block-indexer e2e test", async function () {
   // factoryContract address that is used to create saleContracts
-  const factoryContractAddress = "0x89E1C97c58f7e454A1B05A3080E35d74Bce01b82";
+  const factoryContractAddress = "0x95960cC7f1B199FD309Ab551416bcD5a4140ddb2";
   let mintQueue: Queue<QueueType.CLAIM_EXECUTOR>;
   let saleContractRepo: SaleContractRepository;
   let blockRepo: BlockRepository;
@@ -78,8 +78,8 @@ describe("Block-indexer e2e test", async function () {
   });
 
   it("should process SaleCreated", async function () {
-    const fromBlock = 664365;
-    const toBlock = 664367;
+    const fromBlock = 763954;
+    const toBlock = 763956;
 
     blockIndexer = new BlockIndexer(
       config,
@@ -103,41 +103,41 @@ describe("Block-indexer e2e test", async function () {
     );
     expect(saleContracts.length).to.equal(2);
     expect(saleContracts).to.be.deep.equal([
-      "0xe9a8c99100931cac666f5cea31c4370f684b9168",
-      "0x56de6eee7421bfe9e5fdd14f385f0e69cc39a9a8",
+      "0xee79c1e4016b99dfa6e096a014a56a87b7a67679",
+      "0xf4d343913474196e5c4ae7a3d4558a52931c9e8c",
     ]);
     const blockData = blocks.map((block) => {
       return { blockHash: block.blockHash, blockNumber: block.blockNumber };
     });
     expect(blockData[0]).to.be.deep.equal({
       blockHash:
-        "0xaef3dda5a1e771f53a9b35c6d24fa9f07078068d784044a4e751f36d76aa14af",
-      blockNumber: 664365,
+        "0x6a9517b08d44f2bae0f1bfa65486dddd225eab9ff4639293b7d5867d0fff2576",
+      blockNumber: 763954,
     });
 
     expect(blockData[1]).to.be.deep.equal({
       blockHash:
-        "0x810ef866fb3642ed3402ec3910786d43456f51786f4a275bb34345a7d5c440e8",
-      blockNumber: 664366,
+        "0x941add41aeb95a54768696fbd224ca6ca27e0aa1ea2674f4d79d4ad34fe9d52e",
+      blockNumber: 763955,
     });
 
     expect(blockData[2]).to.be.deep.equal({
       blockHash:
-        "0xb947a8cc409cee266b89b3e82a245011eb6f5191b4bb86103382f06508181588",
-      blockNumber: 664367,
+        "0xd606e4fc387e0f2bda5475d497df8074b09522320ac69c18594d050c02624ef3",
+      blockNumber: 763956,
     });
   });
 
   it("should process claim events", async function () {
-    const fromBlock = 664443;
-    const toBlock = 664444;
+    const fromBlock = 764186;
+    const toBlock = 764199;
 
     blockIndexer = new BlockIndexer(
       config,
       blockRepo,
       [
-        "0xe9a8c99100931cac666f5cea31c4370f684b9168",
-        "0x56de6eee7421bfe9e5fdd14f385f0e69cc39a9a8",
+        "0xee79c1e4016b99dfa6e096a014a56a87b7a67679",
+        "0xf4d343913474196e5c4ae7a3d4558a52931c9e8c",
       ],
       saleContractRepo,
       mintQueue
@@ -155,19 +155,19 @@ describe("Block-indexer e2e test", async function () {
     expect(jobs).to.be.deep.equal([
       {
         walletAddress: "walletadd",
-        amount: "10",
+        amount: "5040",
         claimTxHash:
-          "0x333f0d58cd16cd573d04b1770e3db26e79e6a0319a78e046a5a3fccdea37ce23",
-        saleContractId: "0x56de6eee7421bfe9e5fdd14f385f0e69cc39a9a8",
+          "0x8ffac0f767d998135eaa4750cefa87ea2ad5980e351311e7d16e78e5fcdd51fe",
+        saleContractId: "0xf4d343913474196e5c4ae7a3d4558a52931c9e8c",
         tokenId: 1,
         receiver: "5EcFhFHrL53MQWuJWCKCTGhHBJsWZ7Yn3TXpzCTYj6H4eoCy",
       },
       {
         walletAddress: "walletadd",
-        amount: "10000",
+        amount: "5040",
         claimTxHash:
-          "0x912259099f1495fa5385f72d799c543ae7b114ca605bb24618b024909da52327",
-        saleContractId: "0xe9a8c99100931cac666f5cea31c4370f684b9168",
+          "0x9888fd30b02bbe28c9f2a8b32d61b91f694d38e0519d4068777b257c6a18e3f8",
+        saleContractId: "0xee79c1e4016b99dfa6e096a014a56a87b7a67679",
         tokenId: 1,
         receiver: "5EcFhFHrL53MQWuJWCKCTGhHBJsWZ7Yn3TXpzCTYj6H4eoCy",
       },
