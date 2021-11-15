@@ -79,7 +79,7 @@ export class StatemintWallet {
 
         events.forEach(({ event }) => {
           if (event.method === "ExtrinsicFailed") {
-            error = event.meta.documentation.toString();
+            error = event.meta.docs.toString();
           }
         });
 
