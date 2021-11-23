@@ -114,7 +114,7 @@ export class BlockIndexer extends EventEmitter {
         await this.handleBlock(fromBlock);
         fromBlock++;
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.error(`Error while processing past claim events: ${err.stack}`);
       // hack: insert for blockHash block number
       await this.blockRepository.insertBlock({
@@ -172,7 +172,8 @@ export class BlockIndexer extends EventEmitter {
     blockNumber = blockNumber - this.config.REORG_PROTECTION_COUNT;
     try {
       await this.handleBlock(blockNumber);
-    } catch (err) {
+    } catch (err: any) {
+      logger.error(`Getting error while handling block: ${err.stack}`)
       // hack: insert for blockHash block number
       await this.blockRepository.insertBlock({
         blockHash: blockNumber.toString(),
