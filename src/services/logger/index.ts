@@ -6,6 +6,7 @@ const streams: pinoms.Streams = [
   {
     level: (process.env.LOG_LEVEL as pinoms.Level) || "debug",
     stream: prettyStream({
+      prettyPrint: { singleLine: true },
       dest: process.stdout,
     }),
   },

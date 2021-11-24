@@ -153,7 +153,7 @@ export class BlockIndexer extends EventEmitter {
 
         if (parsedLog.name === "CreatedSaleContract") {
           const saleContract = {
-            id: parsedLog.args?.tokenSaleAddress,
+            id: parsedLog.args?.tokenSaleAddress.toLowerCase(),
             chainId: this.config.CHAIN_ID,
             blockHash: log.blockHash,
           };
@@ -173,6 +173,7 @@ export class BlockIndexer extends EventEmitter {
     try {
       await this.handleBlock(blockNumber);
     } catch (err) {
+      logger.error(`Getting error while handling block: ${err.stack}`);
       // hack: insert for blockHash block number
       await this.blockRepository.insertBlock({
         blockHash: blockNumber.toString(),
