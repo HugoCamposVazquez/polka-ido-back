@@ -84,19 +84,19 @@ export class StatemintWallet {
         });
 
         currentTxDone = true;
+      } else {
+        logger.info({ txInfo: txInfo }, "Transaction failed");
+        error = `Transaction failed with status: ${status}`;
       }
-      else {
-        logger.info(
-          { txInfo: txInfo },
-          "Transaction failed"
-        );
-        error = `Transaction failed with status: ${status}`
-      }
+      currentTxDone = true;
     };
 
-    retry(await tx.signAndSend(this.wallet, txStatusFunction));
-    await waitFor(() => currentTxDone, { timeout: 100000 });
-
+    retry(async () => {
+      currentTxDone = false;
+      error = undefined;
+      await tx.signAndSend(this.wallet, txStatusFunction);
+      await waitFor(() => currentTxDone, { timeout: 100000 });
+    });
     if (error) {
       throw new Error(error);
     }
