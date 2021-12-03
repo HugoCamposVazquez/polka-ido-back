@@ -85,7 +85,7 @@ export class StatemintWallet {
 
         currentTxDone = true;
       } else {
-        logger.info({ txInfo: txInfo }, "Transaction failed");
+        logger.warn({ txInfo: txInfo }, "Transaction failed");
         error = `Transaction failed with status: ${status}`;
       }
       currentTxDone = true;
