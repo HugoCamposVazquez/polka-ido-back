@@ -4,7 +4,7 @@ import { EventRecord, ExtrinsicStatus } from "@polkadot/types/interfaces";
 import { BN } from "@polkadot/util";
 
 import { logger } from "../logger";
-import { waitFor } from "../utils";
+import { waitFor, retry } from "../utils";
 
 export class StatemintWallet {
   private mnemonic: string;
@@ -84,12 +84,19 @@ export class StatemintWallet {
         });
 
         currentTxDone = true;
+      } else {
+        logger.warn({ txInfo: txInfo }, "Transaction failed");
+        error = `Transaction failed with status: ${status}`;
       }
+      currentTxDone = true;
     };
 
-    await tx.signAndSend(this.wallet, txStatusFunction);
-    await waitFor(() => currentTxDone, { timeout: 100000 });
-
+    retry(async () => {
+      currentTxDone = false;
+      error = undefined;
+      await tx.signAndSend(this.wallet, txStatusFunction);
+      await waitFor(() => currentTxDone, { timeout: 100000 });
+    });
     if (error) {
       throw new Error(error);
     }
